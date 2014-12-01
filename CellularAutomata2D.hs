@@ -20,8 +20,8 @@ type Space a = Array (Int, Int) a
 
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> (a -> SDL.Pixel) -> Rule a -> IO ()
-runCellularAutomata2D space colors updateCell = do
+runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> SDL.Pixel) -> Rule a -> IO ()
+runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
     let spaceWidth = maxCol + 1
     let spaceHeight = maxRow + 1
@@ -30,37 +30,68 @@ runCellularAutomata2D space colors updateCell = do
     let screenHeight = spaceHeight * cellSize
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop screen space colors cellSize updateCell
+    loop $ SimulationState screen colors cellSize updateCell space 0 False states
 
-loop :: Eq a => SDL.Surface -> Space a -> (a -> SDL.Pixel) -> Int -> Rule a -> IO ()
-loop screen space colors cellSize updateCell = do
-    quit <- isQuit
-    if quit
-        then SDL.quit
-        else do
-            draw screen space colors cellSize
+data PrivateEvent
+    = No
+    | Quit
+    | Insert Int Int
+    | NextColor
+    | StartStop
+    | EmptySpace
+    | RandomSpace
+    deriving (Show, Eq)
+
+data SimulationState a = SimulationState
+    { screen :: SDL.Surface
+    , colors :: a -> SDL.Pixel
+    , cellSize :: Int
+    , updateCell :: Rule a
+    , space :: Space a
+    , accColor :: Int
+    , running :: Bool
+    , states :: [a]
+    }
+
+loop :: Eq a => SimulationState a -> IO ()
+loop state = do
+    event <- getEvent
+    case event of
+        Quit -> SDL.quit
+        Insert x y -> loop state { space = (space state //
+            [((y `div` (cellSize state), x `div` (cellSize state)),
+             states state !! accColor state)])}
+        NextColor -> loop state { accColor = (accColor state + 1) `mod` length (states state) }
+        StartStop -> loop state { running = not (running state) }
+        No -> do
+            draw state
             threadDelay $ 10^5 * 2
-            newSpace <- update space updateCell
-            loop screen newSpace colors cellSize updateCell
-    where isQuit = SDL.pollEvent >>= \e -> case e of
-            SDL.NoEvent -> return False
-            SDL.Quit -> return True
-            _ -> isQuit
+            newSpace <- if running state
+                then update (space state) (updateCell state)
+                else return (space state)
+            loop state { space = newSpace }
+    where getEvent = SDL.pollEvent >>= \e -> case e of
+            SDL.NoEvent -> return No
+            SDL.Quit -> return Quit
+            SDL.MouseButtonDown x y SDL.ButtonLeft  -> return $ Insert (fromIntegral x) (fromIntegral y)
+            SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
+            _ -> getEvent
 
-draw :: Eq a => SDL.Surface -> Space a -> (a -> SDL.Pixel) -> Int -> IO ()
-draw screen space colors cellSize = do
-    SDL.fillRect screen Nothing (SDL.Pixel 0)
+draw :: Eq a => SimulationState a -> IO ()
+draw state = do
+    SDL.fillRect (screen state) Nothing (SDL.Pixel 0)
     -- let pixelFormat = SDL.surfaceGetPixelFormat screen
-    let (_, (maxRow, maxCol)) = bounds space
+    let (_, (maxRow, maxCol)) = bounds $ space state
     forM_ [0..maxRow] $ \row ->
         forM_ [0..maxCol] $ \col -> do
-            let color = colors (space ! (row, col))
-            let top = cellSize*row
-            let left = cellSize*col
-            Draw.box screen (SDL.Rect left top (left + cellSize) (top + cellSize)) color
-    SDL.flip screen
-    where unsafeLookup key assoc = fromJust $ lookup key assoc
+            let color = (colors state) (space state ! (row, col))
+            let top = cellSize state * row
+            let left = cellSize state * col
+            Draw.box (screen state) (SDL.Rect left top (left + cellSize state) (top + cellSize state)) color
+    SDL.flip (screen state)
 
+------------------- creating spaces -----------------
 randomSpace :: Int -> Int -> [a] -> IO (Space a)
 randomSpace height width cellStateDist = fmap
     (listArray ((0, 0), (height-1, width-1)) . map (cellStateDist !!))
@@ -71,8 +102,9 @@ initSpaceWithDefault defaultValue spaceWidth spaceHeight initCells = listArray
     ((0, 0), (spaceWidth - 1, spaceHeight - 1))
     (replicate (spaceWidth*spaceHeight) defaultValue) // initCells
 
-initSpace = initSpaceWithDefault 0
+initSpace = initSpaceWithDefault (0 :: Int)
 
+--------------------- updating and rules ----------------
 update :: Space a -> Rule a -> IO (Space a)
 update space updateCell = listArray (bounds space) `fmap` mapM (updateCell space) (indices space)
 

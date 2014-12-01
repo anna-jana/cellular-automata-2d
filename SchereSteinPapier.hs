@@ -4,7 +4,9 @@ import CellularAutomata2D
 import qualified Graphics.UI.SDL as SDL
 
 schereSteinPapier :: Space Cell -> IO ()
-schereSteinPapier space = runCellularAutomata2D space colors (makeMoorRule updateCell)
+schereSteinPapier space = runCellularAutomata2D space
+    (map (\color -> Cell color maxLives) [Red, Green, Blue, White])
+    colors (makeMoorRule updateCell)
 
 data CellColor = Red | Green | Blue | White deriving (Show, Eq)
 data Cell = Cell { color :: CellColor, lives :: Int } deriving (Show, Eq)

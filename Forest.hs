@@ -8,7 +8,7 @@ data Wood = Tree | Empty | Fire deriving (Show, Eq)
 
 forest = do
     space <- randomSpace 150 150 [Empty, Tree]
-    runCellularAutomata2D space colors (makeMoorRule updateCell)
+    runCellularAutomata2D space [Tree, Empty, Fire] colors (makeMoorRule updateCell)
 
 newFireProp = 1 - 0.999 :: Float
 newTreeProp = 1 - 0.96 :: Float
