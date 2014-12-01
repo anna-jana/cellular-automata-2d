@@ -25,6 +25,6 @@ updateCell Empty _ = do
         then Tree
         else Empty
 
-colors Fire = SDL.Pixel 4278190335
-colors Tree = SDL.Pixel 3234243982
-colors Empty = SDL.Pixel 0
+colors Fire = 4278190335
+colors Tree = 3234243982
+colors Empty = 0

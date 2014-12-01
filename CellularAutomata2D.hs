@@ -14,13 +14,14 @@ import System.Random (randomRIO)
 import Control.Monad (replicateM, forM_, guard)
 import Control.Concurrent (threadDelay)
 import Data.Maybe (fromJust)
+import Data.Word (Word32)
 
 type Rule a = (Space a -> (Int, Int) -> IO a)
 type Space a = Array (Int, Int) a
 
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> SDL.Pixel) -> Rule a -> IO ()
+runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Word32) -> Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
     let spaceWidth = maxCol + 1
@@ -30,7 +31,7 @@ runCellularAutomata2D space states colors updateCell = do
     let screenHeight = spaceHeight * cellSize
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop $ SimulationState screen colors cellSize updateCell space 0 False states
+    loop $ SimulationState screen (SDL.Pixel . colors) cellSize updateCell space 0 False states
 
 data PrivateEvent
     = No

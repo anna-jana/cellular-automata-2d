@@ -33,7 +33,7 @@ better Green Red = True
 better Blue Green = True
 better _ _ = False
 
-colors = SDL.Pixel . getColor . color
+colors = getColor . color
 getColor White = 0x00000000
 getColor Red   = 0x00FFFFFF
 getColor Blue  = 0x00888888

@@ -10,9 +10,9 @@ brain = do
 
 data Cell = Ready | Firing | Refractory deriving (Show, Eq, Enum)
 
-colors Ready = SDL.Pixel 231241
-colors Firing = SDL.Pixel 4546476
-colors Refractory = SDL.Pixel 0
+colors Ready = 231241
+colors Firing = 4546476
+colors Refractory = 0
 
 rule Ready friends
     | length (filter (== Firing) friends) == 2 = Firing
