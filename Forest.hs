@@ -1,7 +1,6 @@
 module Forest where
 
 import CellularAutomata2D
-import qualified Graphics.UI.SDL as SDL
 import System.Random (randomRIO)
 
 data Wood = Tree | Empty | Fire deriving (Show, Eq)

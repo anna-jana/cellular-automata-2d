@@ -16,7 +16,7 @@ import Control.Concurrent (threadDelay)
 import Data.Maybe (fromJust)
 import Data.Word (Word32)
 
-type Rule a = (Space a -> (Int, Int) -> IO a)
+type Rule a = Space a -> (Int, Int) -> IO a
 type Space a = Array (Int, Int) a
 
 targetScreenWidth = 500
@@ -39,8 +39,6 @@ data PrivateEvent
     | Insert Int Int
     | NextColor
     | StartStop
-    | EmptySpace
-    | RandomSpace
     deriving (Show, Eq)
 
 data SimulationState a = SimulationState
@@ -109,6 +107,7 @@ initSpace = initSpaceWithDefault (0 :: Int)
 update :: Space a -> Rule a -> IO (Space a)
 update space updateCell = listArray (bounds space) `fmap` mapM (updateCell space) (indices space)
 
+-- TODO: make topology not fixed to a torus
 makeRuleWithNeighbors :: [(Int, Int)] -> (a -> [a] -> IO a) -> Rule a
 makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors = \space (row, col) -> do
     let (_, (maxRow, maxCol)) = bounds space
@@ -142,4 +141,5 @@ makeTotalMoorRule stayAlive getBorn = makeMoorRule
         1 -> if sum friends `elem` stayAlive then 1 else 0
         _ -> error $ "binary total rule: expected 0 or 1 but got " ++ show self)
 
+choice :: [a] -> IO a
 choice xs = (xs !!) `fmap` randomRIO (0, length xs - 1)

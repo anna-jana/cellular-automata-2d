@@ -1,7 +1,6 @@
 module SchereSteinPapier where
 
 import CellularAutomata2D
-import qualified Graphics.UI.SDL as SDL
 
 schereSteinPapier :: Space Cell -> IO ()
 schereSteinPapier space = runCellularAutomata2D space

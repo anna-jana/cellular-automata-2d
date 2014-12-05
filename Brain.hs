@@ -1,7 +1,6 @@
 module Brain where
 
 import CellularAutomata2D
-import qualified Graphics.UI.SDL as SDL
 
 brain = do
     space <- randomSpace 50 50 [Ready, Firing, Refractory]

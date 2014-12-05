@@ -1,7 +1,6 @@
 module GameOfLife where
 
 import CellularAutomata2D
-import qualified Graphics.UI.SDL as SDL
 
 gol :: Space Int -> IO ()
 gol space = runCellularAutomata2D space [0,1] ([0, 42345458] !!)
