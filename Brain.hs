@@ -9,9 +9,9 @@ brain = do
 
 data Cell = Ready | Firing | Refractory deriving (Show, Eq, Enum)
 
-colors Ready = 231241
-colors Firing = 4546476
-colors Refractory = 0
+colors Ready = white
+colors Firing = black
+colors Refractory = grey
 
 rule Ready friends
     | length (filter (== Firing) friends) == 2 = Firing

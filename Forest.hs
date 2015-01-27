@@ -24,6 +24,6 @@ updateCell Empty _ = do
         then Tree
         else Empty
 
-colors Fire = 4278190335
-colors Tree = 3234243982
-colors Empty = 0
+colors Fire = red
+colors Tree = green
+colors Empty = brown

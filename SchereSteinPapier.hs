@@ -33,10 +33,10 @@ better Blue Green = True
 better _ _ = False
 
 colors = getColor . color
-getColor White = 0x00000000
-getColor Red   = 0x00FFFFFF
-getColor Blue  = 0x00888888
-getColor Green = 0x00555555
+getColor White = white
+getColor Red   = red
+getColor Blue  = blue
+getColor Green = green
 
 space = initSpaceWithDefault (Cell White maxLives) 50 50 $
     [((10, 10), Cell Red maxLives), ((10,11), Cell Blue maxLives), ((11,10), Cell Green maxLives)]

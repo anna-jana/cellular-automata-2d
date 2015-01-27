@@ -1,5 +1,6 @@
 module CellularAutomata2D (
     Space, Rule,
+    white, black, grey, red, green, blue, cyan, brown, yellow, orange,
     runCellularAutomata2D,
     randomSpace, initSpace, initSpaceWithDefault,
     makeRuleWithNeighbors,
@@ -13,15 +14,36 @@ import Data.Array (listArray, bounds, indices, (!), Array, (//))
 import System.Random (randomRIO)
 import Control.Monad (replicateM, forM_, guard)
 import Control.Concurrent (threadDelay)
-import Data.Maybe (fromJust)
-import Data.Word (Word32)
+import Data.Bits
+import Data.Word (Word32, Word8)
 
 type Rule a = Space a -> (Int, Int) -> IO a
 type Space a = Array (Int, Int) a
+type Color = SDL.Pixel
 
+getColorFromRGB255 :: Word8 -> Word8 -> Word8 -> Color
+getColorFromRGB255 r g b = SDL.Pixel $
+    shiftL (fromIntegral r) 24 .|.
+    shiftL (fromIntegral g) 16 .|.
+    shiftL (fromIntegral b) 8  .|.
+    255
+
+red, green, blue, yellow, cyan, brown, orange, black, white, grey :: Color
+red = getColorFromRGB255 255 0 0
+green = getColorFromRGB255 0 255 0
+blue = getColorFromRGB255 0 0 255
+black = getColorFromRGB255 0 0 0
+white = getColorFromRGB255 255 255 255
+grey = getColorFromRGB255 100 100 100
+yellow = getColorFromRGB255 255 255 0
+cyan = getColorFromRGB255 0 255 255
+brown = getColorFromRGB255 165 42 42
+orange = getColorFromRGB255 255 165 0
+
+targetScreenWidth :: Int
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Word32) -> Rule a -> IO ()
+runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) -> Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
     let spaceWidth = maxCol + 1
@@ -31,7 +53,7 @@ runCellularAutomata2D space states colors updateCell = do
     let screenHeight = spaceHeight * cellSize
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop $ SimulationState screen (SDL.Pixel . colors) cellSize updateCell space 0 False states
+    loop $ SimulationState screen colors cellSize updateCell space 0 False states
 
 data PrivateEvent
     = No
