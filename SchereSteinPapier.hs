@@ -4,7 +4,7 @@ import CellularAutomata2D
 
 schereSteinPapier :: Space Cell -> IO ()
 schereSteinPapier space = runCellularAutomata2D space
-    (map (\color -> Cell color maxLives) [Red, Green, Blue, White])
+    (map (flip Cell maxLives) [Red, Green, Blue, White])
     colors (makeMoorRule updateCell)
 
 data CellColor = Red | Green | Blue | White deriving (Show, Eq)
@@ -27,17 +27,21 @@ fight toUpdate other
     | otherwise = let updated = toUpdate { lives = lives toUpdate - 1 } in
         if lives updated == 0 then Cell (color other) maxLives else updated
 
+better :: CellColor -> CellColor -> Bool
 better Red Blue = True
 better Green Red = True
 better Blue Green = True
 better _ _ = False
 
+colors :: Cell -> Color
 colors = getColor . color
+
+getColor :: CellColor -> Color
 getColor White = white
 getColor Red   = red
 getColor Blue  = blue
 getColor Green = green
 
-space = initSpaceWithDefault (Cell White maxLives) 50 50 $
+simpleSpace :: Space Cell
+simpleSpace = initSpaceWithDefault (Cell White maxLives) 50 50
     [((10, 10), Cell Red maxLives), ((10,11), Cell Blue maxLives), ((11,10), Cell Green maxLives)]
-

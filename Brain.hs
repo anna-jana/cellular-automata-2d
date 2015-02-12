@@ -2,6 +2,7 @@ module Brain where
 
 import CellularAutomata2D
 
+brain :: IO ()
 brain = do
     space <- randomSpace 50 50 [Ready, Firing, Refractory]
     runCellularAutomata2D space [Ready, Firing, Refractory]
@@ -9,10 +10,12 @@ brain = do
 
 data Cell = Ready | Firing | Refractory deriving (Show, Eq, Enum)
 
+colors :: Cell -> Color
 colors Ready = white
 colors Firing = black
 colors Refractory = grey
 
+rule :: Cell -> [Cell] -> Cell
 rule Ready friends
     | length (filter (== Firing) friends) == 2 = Firing
     | otherwise = Ready

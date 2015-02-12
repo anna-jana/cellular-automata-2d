@@ -1,5 +1,5 @@
 module CellularAutomata2D (
-    Space, Rule,
+    Space, Rule, Color,
     white, black, grey, red, green, blue, cyan, brown, yellow, orange,
     runCellularAutomata2D,
     randomSpace, initSpace, initSpaceWithDefault,
@@ -15,7 +15,7 @@ import System.Random (randomRIO)
 import Control.Monad (replicateM, forM_, guard)
 import Control.Concurrent (threadDelay)
 import Data.Bits
-import Data.Word (Word32, Word8)
+import Data.Word (Word8)
 
 type Rule a = Space a -> (Int, Int) -> IO a
 type Space a = Array (Int, Int) a
@@ -48,12 +48,12 @@ runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
     let spaceWidth = maxCol + 1
     let spaceHeight = maxRow + 1
-    let cellSize = targetScreenWidth `div` spaceWidth
-    let screenWidth = spaceWidth * cellSize
-    let screenHeight = spaceHeight * cellSize
+    let actualCellSize = targetScreenWidth `div` spaceWidth
+    let screenWidth = spaceWidth * actualCellSize
+    let screenHeight = spaceHeight * actualCellSize
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop $ SimulationState screen colors cellSize updateCell space 0 False states
+    loop $ SimulationState screen colors actualCellSize updateCell space 0 False states
 
 data PrivateEvent
     = No
@@ -64,14 +64,14 @@ data PrivateEvent
     deriving (Show, Eq)
 
 data SimulationState a = SimulationState
-    { screen :: SDL.Surface
-    , colors :: a -> SDL.Pixel
+    { _screen :: SDL.Surface
+    , _colors :: a -> SDL.Pixel
     , cellSize :: Int
-    , updateCell :: Rule a
-    , space :: Space a
+    , updateCellFn :: Rule a
+    , _space :: Space a
     , accColor :: Int
     , running :: Bool
-    , states :: [a]
+    , possibleStates :: [a]
     }
 
 loop :: Eq a => SimulationState a -> IO ()
@@ -79,19 +79,21 @@ loop state = do
     event <- getEvent
     case event of
         Quit -> SDL.quit
-        Insert x y -> loop state { space = (space state //
-            [((y `div` (cellSize state), x `div` (cellSize state)),
-             states state !! accColor state)])}
-        NextColor -> loop state { accColor = (accColor state + 1) `mod` length (states state) }
+        Insert x y -> loop state { _space = _space state //
+            [((y `div` cellSize state, x `div` cellSize state),
+              possibleStates state !! accColor state)] }
+        NextColor -> loop state { accColor = (accColor state + 1) `mod`
+            length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }
         No -> do
             draw state
-            threadDelay $ 10^5 * 2
+            threadDelay $ 2 * 10 ^ (5 :: Int)
             newSpace <- if running state
-                then update (space state) (updateCell state)
-                else return (space state)
-            loop state { space = newSpace }
-    where getEvent = SDL.pollEvent >>= \e -> case e of
+                then update (_space state) (updateCellFn state)
+                else return (_space state)
+            loop state { _space = newSpace }
+    where
+        getEvent = SDL.pollEvent >>= \e -> case e of
             SDL.NoEvent -> return No
             SDL.Quit -> return Quit
             SDL.MouseButtonDown x y SDL.ButtonLeft  -> return $ Insert (fromIntegral x) (fromIntegral y)
@@ -101,16 +103,16 @@ loop state = do
 
 draw :: Eq a => SimulationState a -> IO ()
 draw state = do
-    SDL.fillRect (screen state) Nothing (SDL.Pixel 0)
+    SDL.fillRect (_screen state) Nothing (SDL.Pixel 0)
     -- let pixelFormat = SDL.surfaceGetPixelFormat screen
-    let (_, (maxRow, maxCol)) = bounds $ space state
+    let (_, (maxRow, maxCol)) = bounds $ _space state
     forM_ [0..maxRow] $ \row ->
         forM_ [0..maxCol] $ \col -> do
-            let color = (colors state) (space state ! (row, col))
+            let color = _colors state (_space state ! (row, col))
             let top = cellSize state * row
             let left = cellSize state * col
-            Draw.box (screen state) (SDL.Rect left top (left + cellSize state) (top + cellSize state)) color
-    SDL.flip (screen state)
+            Draw.box (_screen state) (SDL.Rect left top (left + cellSize state) (top + cellSize state)) color
+    SDL.flip (_screen state)
 
 ------------------- creating spaces -----------------
 randomSpace :: Int -> Int -> [a] -> IO (Space a)
@@ -123,6 +125,7 @@ initSpaceWithDefault defaultValue spaceWidth spaceHeight initCells = listArray
     ((0, 0), (spaceWidth - 1, spaceHeight - 1))
     (replicate (spaceWidth*spaceHeight) defaultValue) // initCells
 
+initSpace :: Int -> Int -> [((Int, Int), Int)] -> Space Int
 initSpace = initSpaceWithDefault (0 :: Int)
 
 --------------------- updating and rules ----------------
@@ -131,7 +134,7 @@ update space updateCell = listArray (bounds space) `fmap` mapM (updateCell space
 
 -- TODO: make topology not fixed to a torus
 makeRuleWithNeighbors :: [(Int, Int)] -> (a -> [a] -> IO a) -> Rule a
-makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors = \space (row, col) -> do
+makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors space (row, col) = do
     let (_, (maxRow, maxCol)) = bounds space
     let friends = map
             (\(drow, dcol) ->

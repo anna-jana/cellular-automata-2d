@@ -5,13 +5,16 @@ import System.Random (randomRIO)
 
 data Wood = Tree | Empty | Fire deriving (Show, Eq)
 
+forest :: IO ()
 forest = do
     space <- randomSpace 150 150 [Empty, Tree]
     runCellularAutomata2D space [Tree, Empty, Fire] colors (makeMoorRule updateCell)
 
-newFireProp = 1 - 0.999 :: Float
-newTreeProp = 1 - 0.96 :: Float
+newFireProp, newTreeProp :: Float
+newFireProp = 1 - 0.999
+newTreeProp = 1 - 0.96
 
+updateCell :: Wood -> [Wood] -> IO Wood
 updateCell Fire _ = return Empty
 updateCell Tree friends = do
     newFire <- randomRIO (0,1)
@@ -24,6 +27,7 @@ updateCell Empty _ = do
         then Tree
         else Empty
 
+colors :: Wood -> Color
 colors Fire = red
 colors Tree = green
 colors Empty = brown
