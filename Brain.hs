@@ -1,9 +1,7 @@
-module Brain where
-
 import CellularAutomata2D
 
-brain :: IO ()
-brain = do
+main :: IO ()
+main = do
     space <- randomSpace 50 50 [Ready, Firing, Refractory]
     runCellularAutomata2D space [Ready, Firing, Refractory]
         colors (makeMoorRule (\self -> return . rule self))

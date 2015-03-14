@@ -1,11 +1,11 @@
-module SchereSteinPapier where
-
 import CellularAutomata2D
 
-schereSteinPapier :: Space Cell -> IO ()
-schereSteinPapier space = runCellularAutomata2D space
-    (map (flip Cell maxLives) [Red, Green, Blue, White])
-    colors (makeMoorRule updateCell)
+main :: IO ()
+main = do
+    let space = initSpaceWithDefault (Cell White maxLives) 50 50 []
+    runCellularAutomata2D space
+        (map (flip Cell maxLives) [Red, Green, Blue, White])
+        colors (makeMoorRule updateCell)
 
 data CellColor = Red | Green | Blue | White deriving (Show, Eq)
 data Cell = Cell { color :: CellColor, lives :: Int } deriving (Show, Eq)
@@ -23,7 +23,8 @@ fight toUpdate other
     | color toUpdate == White = Cell (color other) maxLives
     | color other == White = toUpdate
     | color toUpdate == color other = toUpdate
-    | better (color toUpdate) (color other) = toUpdate { lives = min (lives toUpdate + 1) maxLives }
+    | better (color toUpdate) (color other) =
+        toUpdate { lives = min (lives toUpdate + 1) maxLives }
     | otherwise = let updated = toUpdate { lives = lives toUpdate - 1 } in
         if lives updated == 0 then Cell (color other) maxLives else updated
 
@@ -41,7 +42,3 @@ getColor White = white
 getColor Red   = red
 getColor Blue  = blue
 getColor Green = green
-
-simpleSpace :: Space Cell
-simpleSpace = initSpaceWithDefault (Cell White maxLives) 50 50
-    [((10, 10), Cell Red maxLives), ((10,11), Cell Blue maxLives), ((11,10), Cell Green maxLives)]

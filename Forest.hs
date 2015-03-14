@@ -1,12 +1,10 @@
-module Forest where
-
 import CellularAutomata2D
 import System.Random (randomRIO)
 
 data Wood = Tree | Empty | Fire deriving (Show, Eq)
 
-forest :: IO ()
-forest = do
+main :: IO ()
+main = do
     space <- randomSpace 150 150 [Empty, Tree]
     runCellularAutomata2D space [Tree, Empty, Fire] colors (makeMoorRule updateCell)
 

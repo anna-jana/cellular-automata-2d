@@ -1,6 +1,7 @@
-module GameOfLife where
-
 import CellularAutomata2D
+
+main :: IO ()
+main = gol glieder
 
 gol :: Space Int -> IO ()
 gol space = runCellularAutomata2D space [0,1] ([black, white] !!)
