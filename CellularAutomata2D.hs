@@ -43,7 +43,8 @@ orange = getColorFromRGB255 255 165 0
 targetScreenWidth :: Int
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) -> Rule a -> IO ()
+runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) ->
+                                 Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
     let spaceWidth = maxCol + 1
@@ -53,7 +54,8 @@ runCellularAutomata2D space states colors updateCell = do
     let screenHeight = spaceHeight * actualCellSize
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop $ SimulationState screen colors actualCellSize updateCell space 0 False states
+    loop $ SimulationState screen colors actualCellSize
+        updateCell space 0 False states
 
 data PrivateEvent
     = No
@@ -96,7 +98,8 @@ loop state = do
         getEvent = SDL.pollEvent >>= \e -> case e of
             SDL.NoEvent -> return No
             SDL.Quit -> return Quit
-            SDL.MouseButtonDown x y SDL.ButtonLeft  -> return $ Insert (fromIntegral x) (fromIntegral y)
+            SDL.MouseButtonDown x y SDL.ButtonLeft  ->
+                return $ Insert (fromIntegral x) (fromIntegral y)
             SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
             SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
             _ -> getEvent
@@ -111,7 +114,8 @@ draw state = do
             let color = _colors state (_space state ! (row, col))
             let top = cellSize state * row
             let left = cellSize state * col
-            Draw.box (_screen state) (SDL.Rect left top (left + cellSize state) (top + cellSize state)) color
+            Draw.box (_screen state) (SDL.Rect left top
+                (left + cellSize state) (top + cellSize state)) color
     SDL.flip (_screen state)
 
 ------------------- creating spaces -----------------
@@ -130,15 +134,18 @@ initSpace = initSpaceWithDefault (0 :: Int)
 
 --------------------- updating and rules ----------------
 update :: Space a -> Rule a -> IO (Space a)
-update space updateCell = listArray (bounds space) `fmap` mapM (updateCell space) (indices space)
+update space updateCell = listArray (bounds space) `fmap`
+    mapM (updateCell space) (indices space)
 
 -- TODO: make topology not fixed to a torus
 makeRuleWithNeighbors :: [(Int, Int)] -> (a -> [a] -> IO a) -> Rule a
-makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors space (row, col) = do
+makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors
+                      space (row, col) = do
     let (_, (maxRow, maxCol)) = bounds space
     let friends = map
             (\(drow, dcol) ->
-                space ! ((row + drow) `mod` (maxRow + 1), (col + dcol) `mod` (maxCol + 1)))
+                space ! ((row + drow) `mod` (maxRow + 1),
+                         (col + dcol) `mod` (maxCol + 1)))
             neighborhoodDeltas
     let self = space ! (row, col)
     ruleWithNeighbors self friends
@@ -164,7 +171,8 @@ makeTotalMoorRule stayAlive getBorn = makeMoorRule
     (\self friends -> return $ case self of
         0 -> if sum friends `elem` getBorn then 1 else 0
         1 -> if sum friends `elem` stayAlive then 1 else 0
-        _ -> error $ "binary total rule: expected 0 or 1 but got " ++ show self)
+        _ -> error $ "binary total rule: expected 0 or 1 but got " ++
+            show self)
 
 choice :: [a] -> IO a
 choice xs = (xs !!) `fmap` randomRIO (0, length xs - 1)
