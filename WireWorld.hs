@@ -1,13 +1,13 @@
 import CellularAutomata2D
 
-data Cell = Empty | ElectronHead | ElectronTail | Conductor
-    deriving (Show, Eq, Enum)
+data Cell = Empty | Conductor | ElectronHead | ElectronTail
+    deriving (Show, Eq, Enum, Bounded)
 
 main :: IO ()
 main = runCellularAutomata2D
     (initSpaceWithDefault Empty 50 50 [])
-    [Empty .. Conductor]
-    (([grey, blue, red, yellow] !!) . fromEnum)
+    [minBound..maxBound]
+    (([grey, yellow, blue, red] !!) . fromEnum)
     update
 
 update :: Rule Cell
