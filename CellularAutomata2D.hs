@@ -43,7 +43,7 @@ orange = getColorFromRGB255 255 165 0
 targetScreenWidth :: Int
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) ->
+runCellularAutomata2D :: (Enum a, Eq a) => Space a -> [a] -> (a -> Color) ->
                                  Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
@@ -76,14 +76,15 @@ data SimulationState a = SimulationState
     , possibleStates :: [a]
     }
 
-loop :: Eq a => SimulationState a -> IO ()
+loop :: (Enum a, Eq a) => SimulationState a -> IO ()
 loop state = do
     event <- getEvent
     case event of
         Quit -> SDL.quit
-        Insert x y -> loop state { _space = _space state //
-            [((y `div` cellSize state, x `div` cellSize state),
-              possibleStates state !! accColor state)] }
+        Insert x y ->
+            let cellIndex = (y `div` cellSize state, x `div` cellSize state) in
+                          loop state { _space = _space state //
+                [(cellIndex, next (_space state ! cellIndex))] }
         NextColor -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }
@@ -103,6 +104,7 @@ loop state = do
             SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
             SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
             _ -> getEvent
+        next x = head $ tail $ dropWhile (/= x) $ cycle (possibleStates state)
 
 draw :: Eq a => SimulationState a -> IO ()
 draw state = do
