@@ -43,7 +43,7 @@ orange = getColorFromRGB255 255 165 0
 targetScreenWidth :: Int
 targetScreenWidth = 500
 
-runCellularAutomata2D :: (Enum a, Eq a) => Space a -> [a] -> (a -> Color) ->
+runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) ->
                                  Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (_, (maxRow, maxCol)) = bounds space
@@ -76,7 +76,7 @@ data SimulationState a = SimulationState
     , possibleStates :: [a]
     }
 
-loop :: (Enum a, Eq a) => SimulationState a -> IO ()
+loop :: Eq a => SimulationState a -> IO ()
 loop state = do
     event <- getEvent
     case event of

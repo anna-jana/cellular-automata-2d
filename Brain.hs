@@ -6,7 +6,7 @@ main = do
     runCellularAutomata2D space [Ready, Firing, Refractory]
         colors (makeMoorRule (\self -> return . rule self))
 
-data Cell = Ready | Firing | Refractory deriving (Show, Eq, Enum)
+data Cell = Ready | Firing | Refractory deriving (Show, Eq)
 
 colors :: Cell -> Color
 colors Ready = white
