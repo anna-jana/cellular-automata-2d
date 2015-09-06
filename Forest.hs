@@ -1,4 +1,5 @@
 import CellularAutomata2D
+import GUI
 import System.Random (randomRIO)
 
 data Wood = Tree | Empty | Fire deriving (Show, Eq)

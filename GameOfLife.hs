@@ -1,4 +1,5 @@
 import CellularAutomata2D
+import GUI
 
 main :: IO ()
 main = gol glieder

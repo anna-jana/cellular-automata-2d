@@ -1,4 +1,5 @@
 import CellularAutomata2D
+import GUI
 
 data Cell = Empty | Conductor | ElectronHead | ElectronTail
     deriving (Show, Eq, Enum, Bounded)
