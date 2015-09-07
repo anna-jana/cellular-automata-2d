@@ -1,70 +1,77 @@
 module CellularAutomata2D (
-    Space, Rule,
-    getCell, setCell, forSpace, getSpaceSize,
-    randomSpace, initSpace, initSpaceWithDefault,
-    update,
+    Rule,
+    Space(..),
+    Torus(..),
+    forSpace,
+    randomSpace, initSpaceWithCells, initSpaceWithDefault,
     makeRuleWithNeighbors,
     makeMoorRule, makeNeumanRule,
     makeTotalMoorRule,
     choice) where
 
-import System.Random (randomRIO)
+import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, indices, (!), Array, (//))
 import Control.Monad (replicateM, forM_, guard)
+import Control.Applicative ((<$>))
 
-type Rule a = Space a -> (Int, Int) -> IO a
-type Space a = Array (Int, Int) a
+type Rule s a = s a -> (Int, Int) -> IO a
 
-getCell :: (Int, Int) -> Space a -> a
-getCell = flip (!)
+class Space s where
+    getCell :: (Int, Int) -> s a -> a
+    setCell :: s a -> a -> (Int, Int) -> s a
+    getSpaceSize :: s a -> (Int, Int)
+    initSpaceIO :: (Int, Int) -> ((Int, Int) -> IO a) -> IO (s a)
+    initSpace :: (Int, Int) -> ((Int, Int) -> a) -> s a
 
-setCell :: Space a -> a -> (Int, Int) -> Space a
-setCell space cell index = space // [(index, cell)]
+    setCells :: s a -> [((Int, Int), a)] -> s a
+    setCells = foldl (\s c -> setCell s (snd c) (fst c))
 
-forSpace :: Space a -> ((Int, Int) -> a -> IO ()) -> IO ()
+    update :: s a -> Rule s a -> IO (s a)
+    update space updateCell = initSpaceIO (getSpaceSize space) (updateCell space)
+
+----------------------- torus array space -----------------------
+newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
+
+instance Space Torus where
+    getCell (row, col) (Torus a) = a ! (row `mod` h, col `mod` w)
+        where (h, w) = getSpaceSize (Torus a)
+    setCell (Torus space) cell index = Torus $ space // [(index, cell)]
+    setCells (Torus space) cells = Torus $ space // cells
+    getSpaceSize (Torus space) = (maxRow + 1, maxCol + 1)
+        where (_, (maxRow, maxCol)) = bounds space
+    initSpaceIO (h, w) initFn = Torus . listArray ((0, 0), (h - 1, w - 1)) <$>
+        sequence [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
+    initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
+        [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
+
+------------------ space interation ------------------
+forSpace :: Space s => s a -> ((Int, Int) -> a -> IO ()) -> IO ()
 forSpace space fn =
-    forM_ [0..maxRow] $ \row ->
-        forM_ [0..maxCol] $ \col ->
-            fn (row, col) (space ! (row, col))
-    where (_, (maxRow, maxCol)) = bounds space
-
-getSpaceSize :: Space a -> (Int, Int)
-getSpaceSize space = (maxRow + 1, maxCol + 1)
-    where (_, (maxRow, maxCol)) = bounds space
+    forM_ [0..spaceHeight - 1] $ \row ->
+        forM_ [0..spaceWidth - 1] $ \col ->
+            fn (row, col) (getCell (row, col) space)
+    where (spaceHeight, spaceWidth) = getSpaceSize space
 
 ------------------- creating spaces -----------------
-randomSpace :: Int -> Int -> [a] -> IO (Space a)
-randomSpace height width cellStateDist = fmap
-    (listArray ((0, 0), (height-1, width-1)) . map (cellStateDist !!))
-    (replicateM (width*height) (randomRIO (0, length cellStateDist - 1)))
+randomSpace :: Space s => Int -> Int -> [a] -> IO (s a)
+randomSpace height width cellStateDist = initSpaceIO (height, width) $ \_ ->
+    (cellStateDist !!) <$> randomRIO (0, length cellStateDist - 1)
 
-initSpaceWithDefault :: a -> Int -> Int -> [((Int, Int), a)] -> Space a
-initSpaceWithDefault defaultValue spaceWidth spaceHeight initCells = listArray
-    ((0, 0), (spaceWidth - 1, spaceHeight - 1))
-    (replicate (spaceWidth*spaceHeight) defaultValue) // initCells
+initSpaceWithDefault :: Space s => a -> Int -> Int -> [((Int, Int), a)] -> s a
+initSpaceWithDefault defaultValue spaceWidth spaceHeight initCells =
+    setCells (initSpace (spaceHeight, spaceWidth) (const defaultValue)) initCells
 
-initSpace :: Int -> Int -> [((Int, Int), Int)] -> Space Int
-initSpace = initSpaceWithDefault (0 :: Int)
+initSpaceWithCells :: Space s => Int -> Int -> [((Int, Int), Int)] -> s Int
+initSpaceWithCells = initSpaceWithDefault (0 :: Int)
 
 --------------------- updating and rules ----------------
-update :: Space a -> Rule a -> IO (Space a)
-update space updateCell = listArray (bounds space) `fmap`
-    mapM (updateCell space) (indices space)
-
--- TODO: make topology not fixed to a torus
-makeRuleWithNeighbors :: [(Int, Int)] -> (a -> [a] -> IO a) -> Rule a
+makeRuleWithNeighbors :: Space s => [(Int, Int)] -> (a -> [a] -> IO a) -> Rule s a
 makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors
-                      space (row, col) = do
-    let (_, (maxRow, maxCol)) = bounds space
-    let friends = map
-            (\(drow, dcol) ->
-                space ! ((row + drow) `mod` (maxRow + 1),
-                         (col + dcol) `mod` (maxCol + 1)))
-            neighborhoodDeltas
-    let self = space ! (row, col)
-    ruleWithNeighbors self friends
+                      space (row, col) = ruleWithNeighbors self friends
+    where self = getCell (row, col) space
+          friends = map (\(dr, dc) -> getCell (row + dr, col + dc) space) neighborhoodDeltas
 
-makeMoorRule, makeNeumanRule :: (a -> [a] -> IO a) -> Rule a
+makeMoorRule, makeNeumanRule :: Space s => (a -> [a] -> IO a) -> Rule s a
 makeMoorRule = makeRuleWithNeighbors moorIndexDeltas
 makeNeumanRule = makeRuleWithNeighbors neumannIndexDeltas
 
@@ -80,7 +87,7 @@ neumannIndexDeltas = do
     guard $ (dx == 0) /= (dy == 0)
     return (dy, dx)
 
-makeTotalMoorRule :: [Int] -> [Int] -> Rule Int
+makeTotalMoorRule :: Space s => [Int] -> [Int] -> Rule s Int
 makeTotalMoorRule stayAlive getBorn = makeMoorRule
     (\self friends -> return $ case self of
         0 -> if sum friends `elem` getBorn then 1 else 0

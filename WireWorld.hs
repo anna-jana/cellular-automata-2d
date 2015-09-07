@@ -6,13 +6,13 @@ data Cell = Empty | Conductor | ElectronHead | ElectronTail
 
 main :: IO ()
 main = runCellularAutomata2D
-    (initSpaceWithDefault Empty 50 50 [])
+    (initSpaceWithDefault Empty 50 50 [] :: Torus Cell)
     [minBound..maxBound]
     (([grey, yellow, blue, red] !!) . fromEnum)
-    update
+    wireWorldRule
 
-update :: Rule Cell
-update = makeMoorRule (\self friends -> return $ case self of
+wireWorldRule :: Space s => Rule s Cell
+wireWorldRule = makeMoorRule (\self friends -> return $ case self of
     Empty -> Empty
     ElectronHead -> ElectronTail
     ElectronTail -> Conductor

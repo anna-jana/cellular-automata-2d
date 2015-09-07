@@ -3,16 +3,17 @@ import GUI
 import Term
 
 main :: IO ()
-main = termGOL glieder
+main = gol glieder
 
-termGOL :: Space Int -> IO ()
+termGOL :: Space s => s Int -> IO ()
 termGOL space = runInTerminal ("_#"!!) space golRule
 
-gol :: Space Int -> IO ()
+gol :: Space s => s Int -> IO ()
 gol space = runCellularAutomata2D space [0,1] ([black, white] !!) golRule
 
-glieder :: Space Int
-glieder = initSpace 20 20 (zip [(0,2),(1,2),(2,2),(2,1),(1,0)] (repeat 1))
+glieder :: Torus Int
+glieder = initSpaceWithCells 20 20
+    (zip [(0,2),(1,2),(2,2),(2,1),(1,0)] (repeat 1))
 
-golRule :: Rule Int
+golRule :: Space s => Rule s Int
 golRule = makeTotalMoorRule [2,3] [3]

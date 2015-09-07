@@ -36,8 +36,8 @@ orange = getColorFromRGB255 255 165 0
 targetScreenWidth :: Int
 targetScreenWidth = 500
 
-runCellularAutomata2D :: Eq a => Space a -> [a] -> (a -> Color) ->
-                                 Rule a -> IO ()
+runCellularAutomata2D :: (Space s, Eq a) => s a -> [a] -> (a -> Color) ->
+                                 Rule s a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (spaceHeight, spaceWidth) = getSpaceSize space
     let actualCellSize = targetScreenWidth `div` spaceWidth
@@ -56,18 +56,18 @@ data PrivateEvent
     | StartStop
     deriving (Show, Eq)
 
-data SimulationState a = SimulationState
+data SimulationState s a = SimulationState
     { _screen :: SDL.Surface
     , _colors :: a -> SDL.Pixel
     , cellSize :: Int
-    , updateCellFn :: Rule a
-    , _space :: Space a
+    , updateCellFn :: Rule s a
+    , _space :: s a
     , accColor :: Int
     , running :: Bool
     , possibleStates :: [a]
     }
 
-loop :: Eq a => SimulationState a -> IO ()
+loop :: (Eq a, Space s) => SimulationState s a -> IO ()
 loop state = do
     event <- getEvent
     case event of
@@ -97,7 +97,7 @@ loop state = do
             _ -> getEvent
         next x = head $ tail $ dropWhile (/= x) $ cycle (possibleStates state)
 
-draw :: Eq a => SimulationState a -> IO ()
+draw :: (Space s, Eq a) => SimulationState s a -> IO ()
 draw state = do
     SDL.fillRect (_screen state) Nothing (SDL.Pixel 0)
     forSpace (_space state) $ \(row, col) cell -> do

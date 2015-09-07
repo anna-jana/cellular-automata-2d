@@ -3,7 +3,7 @@ import GUI
 
 main :: IO ()
 main = do
-    let space = initSpaceWithDefault (Cell White maxLives) 50 50 []
+    let space = initSpaceWithDefault (Cell White maxLives) 50 50 [] :: Torus Cell
     runCellularAutomata2D space
         (map (flip Cell maxLives) [Red, Green, Blue, White])
         colors (makeMoorRule updateCell)
