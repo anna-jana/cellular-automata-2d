@@ -15,9 +15,7 @@ maxLives :: Int
 maxLives = 4
 
 updateCell :: Cell -> [Cell] -> IO Cell
-updateCell self friends = do
-    enemy <- choice friends
-    return $ fight self enemy
+updateCell self friends = fight self `fmap` choice friends
 
 fight :: Cell -> Cell -> Cell
 fight toUpdate other
