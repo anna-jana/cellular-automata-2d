@@ -5,9 +5,9 @@ import Control.Monad (when)
 import CellularAutomata2D
 
 -- | Runs a 2d cellular automata in the terminal using
--- | a function witch returns a char for a cell state,
--- | an initial space and a rule.
--- | The user can press enter to view the next generation.
+-- a function witch returns a char for a cell state,
+-- an initial space and a rule.
+-- The user can press enter to view the next generation.
 runInTerminal :: Space s => (a -> Char) -> s a -> Rule s a -> IO ()
 runInTerminal char space rule = do
     printSpace char space

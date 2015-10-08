@@ -13,8 +13,8 @@ import Data.Word (Word8)
 import CellularAutomata2D
 
 -- | Colors for the different cell values.
--- | On my machine mapRGBA didn't work, so I created my own colors
--- | using bitoperations.
+-- On my machine mapRGBA didn't work, so I created my own colors
+-- using bitoperations.
 type Color = SDL.Pixel
 
 getColorFromRGB255 :: Word8 -> Word8 -> Word8 -> Color
@@ -40,12 +40,12 @@ targetScreenWidth :: Int
 targetScreenWidth = 500
 
 -- | Runs a GUI for a 2d cellular automata using
--- | a given starting space, a list of cell states witch can be used
--- | by the user to edit the space, a function witch takes a cell states
--- | and returns a color to draw the individual cells and a rule that is
--- | used to updated the space.
--- | The user can press space to start and stop the simulation of the automata.
--- | He can also edit the space by clicking into a cell witch goes to the next state.
+-- a given starting space, a list of cell states witch can be used
+-- by the user to edit the space, a function witch takes a cell states
+-- and returns a color to draw the individual cells and a rule that is
+-- used to updated the space.
+-- The user can press space to start and stop the simulation of the automata.
+-- He can also edit the space by clicking into a cell witch goes to the next state.
 runCellularAutomata2D :: (Space s, Eq a) => s a -> [a] -> (a -> Color) ->
                                  Rule s a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
