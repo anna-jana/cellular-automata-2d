@@ -1,9 +1,14 @@
 module CellularAutomata2D (
+    -- * General Concepts
     Rule(..),
     Space(..),
+    -- * Torus shaped space
     Torus(..),
+    -- * Space Utils
     forSpace,
+    -- * Initializing Spaces
     randomSpace, initSpaceWithCells, initIntSpaceWithCells,
+    -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
     choice) where
@@ -12,6 +17,8 @@ import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, (!), Array, (//))
 import Control.Monad (forM_, guard)
 import Control.Applicative ((<$>))
+
+-------------------------------- General Concepts ------------------------------
 
 -- | A Rule is a function that returns a new cell value for an old state.
 -- The new cell value is in the IO Monad so that you can implement nondeterminstic
@@ -52,7 +59,7 @@ class Space s where
               friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) (ruleNeighborhoodDeltas rule)
               self = getCell space (row, col)
 
------------------------ torus array space -----------------------
+------------------------------- Torus shaped space -------------------------
 -- | A Torus is basicly a plane with top and botton connected as well as left and right connected.
 newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
 
@@ -68,7 +75,8 @@ instance Space Torus where
     initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
         [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
 
------------------- space interation ------------------
+----------------------------------- Space Utils -------------------------------
+
 -- | Iterates over a given space and calls a given function on the
 -- coordinate and value of each cells.
 -- This is done in row mayor order.
@@ -79,7 +87,8 @@ forSpace space fn =
             fn (row, col) (getCell space (row, col))
     where (spaceHeight, spaceWidth) = getSpaceSize space
 
-------------------- creating spaces -----------------
+-------------------------------- Initializing Spaces ------------------------------
+
 -- | Initializes a space of a given shape using a list of possible cells.
 -- Each cell is randomly choosen from the list.
 -- You might want to duplicate elements in the list to ajust the frequencys
@@ -97,7 +106,7 @@ initSpaceWithCells (spaceWidth, spaceHeight) defaultValue =
 initIntSpaceWithCells :: Space s => (Int, Int) -> [((Int, Int), Int)] -> s Int
 initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
---------------------- updating and rules ----------------
+----------------------------------- Helper for Rules ----------------------------------
 
 -- | The Moor neightborhood, witch is used in most cellular automata like
 -- conways game of life.
