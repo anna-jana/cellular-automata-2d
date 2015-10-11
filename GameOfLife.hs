@@ -15,5 +15,5 @@ glieder :: Torus Int
 glieder = initIntSpaceWithCells (20, 20)
     (zip [(0,2),(1,2),(2,2),(2,1),(1,0)] (repeat 1))
 
-golRule :: Space s => Rule s Int
+golRule :: Rule Int
 golRule = makeTotalMoorRule [2,3] [3]

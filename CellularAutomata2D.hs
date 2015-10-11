@@ -4,7 +4,6 @@ module CellularAutomata2D (
     Torus(..),
     forSpace,
     randomSpace, initSpaceWithCells, initIntSpaceWithCells,
-    makeRuleWithNeighbors,
     makeMoorRule, makeNeumanRule,
     makeTotalMoorRule,
     choice) where
@@ -14,8 +13,14 @@ import Data.Array (listArray, bounds, (!), Array, (//))
 import Control.Monad (forM_, guard)
 import Control.Applicative ((<$>))
 
--- | A Rule is a function that returns a new cell value for a given cell coordinate in a given space.
-type Rule s a = s a -> (Int, Int) -> IO a
+-- | A Rule is a function that returns a new cell value for an old state.
+-- The new cell value is in the IO Monad so that you can implement nondeterminstic
+-- (stochastic) automata. The neighborhood is specified by a list of offsets from the cell
+-- coordinate.
+data Rule a = Rule
+    { ruleNeighborhoodDeltas :: [(Int, Int)]
+    , ruleFunction :: a -> [a] -> IO a
+    }
 
 class Space s where
     -- | Get a cell at a coordinate in the space.
@@ -39,8 +44,13 @@ class Space s where
     setCells = foldl (\s (i, v) -> setCell s i v)
 
     -- | Updates a given space by one generation using a given rule.
-    update :: s a -> Rule s a -> IO (s a)
-    update space updateCell = initSpaceIO (getSpaceSize space) (updateCell space)
+    update :: s a -> Rule a -> IO (s a)
+    update space rule = initSpaceIO (getSpaceSize space) updateCell
+      where
+          updateCell (row, col) = ruleFunction rule self friends
+            where
+              friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) (ruleNeighborhoodDeltas rule)
+              self = getCell space (row, col)
 
 ----------------------- torus array space -----------------------
 -- | A Torus is basicly a plane with top and botton connected as well as left and right connected.
@@ -89,22 +99,13 @@ initIntSpaceWithCells :: Space s => (Int, Int) -> [((Int, Int), Int)] -> s Int
 initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 --------------------- updating and rules ----------------
--- | Creates a rule from a function witch takes the cell value and a list of neightbors and
--- returns the new cell value in the IO Monad so that you can implement nondeterminstic
--- (stochastic) automata. The neighborhood is specified by a list of deltas from the cell
--- coordinate.
-makeRuleWithNeighbors :: Space s => [(Int, Int)] -> (a -> [a] -> IO a) -> Rule s a
-makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors
-                      space (row, col) = ruleWithNeighbors self friends
-    where self = getCell space (row, col)
-          friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) neighborhoodDeltas
 
-makeMoorRule, makeNeumanRule :: Space s => (a -> [a] -> IO a) -> Rule s a
+makeMoorRule, makeNeumanRule :: (a -> [a] -> IO a) -> Rule a
 -- ^ Specialized version of makeRuleWithNeighbors for the Moor neightborhood.
 -- This is the standard neighborhood for a lot of automata like conways game of life
-makeMoorRule = makeRuleWithNeighbors moorIndexDeltas
+makeMoorRule = Rule moorIndexDeltas
 -- ^ Specialized version of makeRuleWithNeighbors for the von Neuman neightborhood.
-makeNeumanRule = makeRuleWithNeighbors neumannIndexDeltas
+makeNeumanRule = Rule neumannIndexDeltas
 
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = do
@@ -121,7 +122,7 @@ neumannIndexDeltas = do
 -- | Creates a life like automata from a list of neightborhood sizes in witch
 -- a new cell is born and a list of neightborhood sizes where the cell stays
 -- alive. e.g. the game of life is makeTotalMoorRule [2,3] [3]
-makeTotalMoorRule :: Space s => [Int] -> [Int] -> Rule s Int
+makeTotalMoorRule :: [Int] -> [Int] -> Rule Int
 makeTotalMoorRule stayAlive getBorn = makeMoorRule
     (\self friends -> return $ case self of
         0 -> if sum friends `elem` getBorn then 1 else 0

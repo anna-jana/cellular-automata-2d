@@ -11,7 +11,7 @@ main = runCellularAutomata2D
     (([grey, yellow, blue, red] !!) . fromEnum)
     wireWorldRule
 
-wireWorldRule :: Space s => Rule s Cell
+wireWorldRule :: Rule Cell
 wireWorldRule = makeMoorRule (\self friends -> return $ case self of
     Empty -> Empty
     ElectronHead -> ElectronTail

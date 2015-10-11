@@ -47,7 +47,7 @@ targetScreenWidth = 500
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
 runCellularAutomata2D :: (Space s, Eq a) => s a -> [a] -> (a -> Color) ->
-                                 Rule s a -> IO ()
+                                 Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (spaceHeight, spaceWidth) = getSpaceSize space
     let actualCellSize = targetScreenWidth `div` spaceWidth
@@ -70,7 +70,7 @@ data SimulationState s a = SimulationState
     { _screen :: SDL.Surface
     , _colors :: a -> SDL.Pixel
     , cellSize :: Int
-    , updateCellFn :: Rule s a
+    , updateCellFn :: Rule a
     , _space :: s a
     , accColor :: Int
     , running :: Bool
