@@ -85,8 +85,7 @@ forSpace space fn =
 -- You might want to duplicate elements in the list to ajust the frequencys
 -- (probability to be choosen) of the cell values.
 randomSpace :: Space s => (Int, Int) -> [a] -> IO (s a)
-randomSpace (height, width) cellStateDist = initSpaceIO (height, width) $ \_ ->
-    (cellStateDist !!) <$> randomRIO (0, length cellStateDist - 1)
+randomSpace (height, width) cellStateDist = initSpaceIO (height, width) $ const $ choice cellStateDist
 
 -- | Initializes a space with a default background cell value and a few cells
 -- at given coordinates with individual values.
