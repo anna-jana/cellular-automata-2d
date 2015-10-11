@@ -5,7 +5,7 @@ main :: IO ()
 main = do
     space <- randomSpace (50, 50) [Ready, Firing, Refractory] :: IO (Torus Cell)
     runCellularAutomata2D space [Ready, Firing, Refractory]
-        colors (makeMoorRule (\self -> return . rule self))
+        colors (Rule moorIndexDeltas (\self -> return . rule self))
 
 data Cell = Ready | Firing | Refractory deriving (Show, Eq)
 

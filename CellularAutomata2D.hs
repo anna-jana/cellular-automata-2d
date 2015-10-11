@@ -1,10 +1,10 @@
 module CellularAutomata2D (
-    Rule,
+    Rule(..),
     Space(..),
     Torus(..),
     forSpace,
     randomSpace, initSpaceWithCells, initIntSpaceWithCells,
-    makeMoorRule, makeNeumanRule,
+    moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
     choice) where
 
@@ -99,19 +99,15 @@ initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 --------------------- updating and rules ----------------
 
-makeMoorRule, makeNeumanRule :: (a -> [a] -> IO a) -> Rule a
--- ^ Specialized version of makeRuleWithNeighbors for the Moor neightborhood.
--- This is the standard neighborhood for a lot of automata like conways game of life
-makeMoorRule = Rule moorIndexDeltas
--- ^ Specialized version of makeRuleWithNeighbors for the von Neuman neightborhood.
-makeNeumanRule = Rule neumannIndexDeltas
-
+-- | The Moor neightborhood, witch is used in most cellular automata like
+-- conways game of life.
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = do
     dx <- [-1..1]; dy <- [-1..1]
     guard $ not (dx == 0 && dy == 0)
     return (dy, dx)
 
+-- | The von Neunman neightborhood.
 neumannIndexDeltas :: [(Int, Int)]
 neumannIndexDeltas = do
     dx <- [-1..1]; dy <- [-1..1]
@@ -122,7 +118,7 @@ neumannIndexDeltas = do
 -- a new cell is born and a list of neightborhood sizes where the cell stays
 -- alive. e.g. the game of life is makeTotalMoorRule [2,3] [3]
 makeTotalMoorRule :: [Int] -> [Int] -> Rule Int
-makeTotalMoorRule stayAlive getBorn = makeMoorRule
+makeTotalMoorRule stayAlive getBorn = Rule moorIndexDeltas
     (\self friends -> return $ case self of
         0 -> if sum friends `elem` getBorn then 1 else 0
         1 -> if sum friends `elem` stayAlive then 1 else 0

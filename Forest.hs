@@ -8,7 +8,7 @@ main :: IO ()
 main = do
     space <- randomSpace (150, 150) [Empty, Tree] :: IO (Torus Wood)
     runCellularAutomata2D space [Tree, Empty, Fire] colors
-        (makeMoorRule updateCell)
+        (Rule moorIndexDeltas updateCell)
 
 newFireProp, newTreeProp :: Float
 newFireProp = 1 - 0.999

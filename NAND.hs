@@ -21,7 +21,7 @@ logicSpace :: Bool -> Bool -> Bool -> IO ()
 logicSpace isAnd isMoor withSelf = do
     space <- randomSpace (50, 50) [True, False] :: IO (Torus Bool)
     -- let space = initSpaceWithDefault False (50, 50) [] :: Torus Bool
-    let ruleMaker = if isMoor then makeMoorRule else makeNeumanRule
+    let ruleMaker = if isMoor then Rule moorIndexDeltas else Rule neumannIndexDeltas
     let logicFn = if isAnd then and else or
     let rule = ruleMaker (\self ns -> return $ not $ logicFn (if withSelf then self:ns else ns))
     runCellularAutomata2D space [True, False] colors rule
@@ -29,7 +29,7 @@ logicSpace isAnd isMoor withSelf = do
 asymNANDSpace :: IO ()
 asymNANDSpace = do
     space <- randomSpace (50, 50) [True, False] :: IO (Torus Bool)
-    runCellularAutomata2D space [True, False] colors $ makeMoorRule $ \self ns ->
+    runCellularAutomata2D space [True, False] colors $ Rule moorIndexDeltas $ \self ns ->
         return $ not $ and $ self : take 3 ns
 colors :: Bool -> Color
 colors c

@@ -12,7 +12,7 @@ main = runCellularAutomata2D
     wireWorldRule
 
 wireWorldRule :: Rule Cell
-wireWorldRule = makeMoorRule (\self friends -> return $ case self of
+wireWorldRule = Rule moorIndexDeltas (\self friends -> return $ case self of
     Empty -> Empty
     ElectronHead -> ElectronTail
     ElectronTail -> Conductor

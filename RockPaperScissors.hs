@@ -6,7 +6,7 @@ main = do
     let space = initSpaceWithCells (50, 50) (Cell White maxLives) [] :: Torus Cell
     runCellularAutomata2D space
         (map (flip Cell maxLives) [Red, Green, Blue, White])
-        colors (makeMoorRule updateCell)
+        colors (Rule moorIndexDeltas updateCell)
 
 data CellColor = Red | Green | Blue | White deriving (Show, Eq)
 data Cell = Cell { color :: CellColor, lives :: Int } deriving (Show, Eq)
