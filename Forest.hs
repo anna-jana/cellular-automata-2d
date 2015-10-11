@@ -6,7 +6,7 @@ data Wood = Tree | Empty | Fire deriving (Show, Eq)
 
 main :: IO ()
 main = do
-    space <- randomSpace 150 150 [Empty, Tree] :: IO (Torus Wood)
+    space <- randomSpace (150, 150) [Empty, Tree] :: IO (Torus Wood)
     runCellularAutomata2D space [Tree, Empty, Fire] colors
         (makeMoorRule updateCell)
 

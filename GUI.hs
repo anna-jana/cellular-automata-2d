@@ -84,8 +84,8 @@ loop state = do
         Quit -> SDL.quit
         Insert x y ->
             let cellIndex = (y `div` cellSize state, x `div` cellSize state) in
-                          loop state { _space = setCell (_space state)
-                            (next (getCell cellIndex $ _space state)) cellIndex }
+                          loop state { _space = setCell (_space state) cellIndex
+                            (next (flip getCell cellIndex $ _space state)) }
         NextColor -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }

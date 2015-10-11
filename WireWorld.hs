@@ -6,7 +6,7 @@ data Cell = Empty | Conductor | ElectronHead | ElectronTail
 
 main :: IO ()
 main = runCellularAutomata2D
-    (initSpaceWithDefault Empty 50 50 [] :: Torus Cell)
+    (initSpaceWithCells (50, 50) Empty [] :: Torus Cell)
     [minBound..maxBound]
     (([grey, yellow, blue, red] !!) . fromEnum)
     wireWorldRule

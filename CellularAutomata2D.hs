@@ -3,15 +3,15 @@ module CellularAutomata2D (
     Space(..),
     Torus(..),
     forSpace,
-    randomSpace, initSpaceWithCells, initSpaceWithDefault,
+    randomSpace, initSpaceWithCells, initIntSpaceWithCells,
     makeRuleWithNeighbors,
     makeMoorRule, makeNeumanRule,
     makeTotalMoorRule,
     choice) where
 
 import System.Random (randomRIO, Random)
-import Data.Array (listArray, bounds, indices, (!), Array, (//))
-import Control.Monad (replicateM, forM_, guard)
+import Data.Array (listArray, bounds, (!), Array, (//))
+import Control.Monad (forM_, guard)
 import Control.Applicative ((<$>))
 
 -- | A Rule is a function that returns a new cell value for a given cell coordinate in a given space.
@@ -19,9 +19,9 @@ type Rule s a = s a -> (Int, Int) -> IO a
 
 class Space s where
     -- | Get a cell at a coordinate in the space.
-    getCell :: (Int, Int) -> s a -> a
+    getCell :: s a -> (Int, Int) -> a
     -- | Set a cell at a coordinate in the space to a new value.
-    setCell :: s a -> a -> (Int, Int) -> s a
+    setCell :: s a -> (Int, Int) -> a -> s a
     -- | Get the dimensions of the space.
     getSpaceSize :: s a -> (Int, Int)
     -- | Initializes the space using a given function that takes a coordinate
@@ -36,7 +36,7 @@ class Space s where
     -- This function has a default implementation in terms of setCell
     -- but it might be specialized for performence purposes.
     setCells :: s a -> [((Int, Int), a)] -> s a
-    setCells = foldl (\s c -> setCell s (snd c) (fst c))
+    setCells = foldl (\s (i, v) -> setCell s i v)
 
     -- | Updates a given space by one generation using a given rule.
     update :: s a -> Rule s a -> IO (s a)
@@ -47,9 +47,9 @@ class Space s where
 newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
 
 instance Space Torus where
-    getCell (row, col) (Torus a) = a ! (row `mod` h, col `mod` w)
+    getCell (Torus a) (row, col) = a ! (row `mod` h, col `mod` w)
         where (h, w) = getSpaceSize (Torus a)
-    setCell (Torus space) cell index = Torus $ space // [(index, cell)]
+    setCell (Torus space) index cell = Torus $ space // [(index, cell)]
     setCells (Torus space) cells = Torus $ space // cells
     getSpaceSize (Torus space) = (maxRow + 1, maxCol + 1)
         where (_, (maxRow, maxCol)) = bounds space
@@ -66,7 +66,7 @@ forSpace :: Space s => s a -> ((Int, Int) -> a -> IO ()) -> IO ()
 forSpace space fn =
     forM_ [0..spaceHeight - 1] $ \row ->
         forM_ [0..spaceWidth - 1] $ \col ->
-            fn (row, col) (getCell (row, col) space)
+            fn (row, col) (getCell space (row, col))
     where (spaceHeight, spaceWidth) = getSpaceSize space
 
 ------------------- creating spaces -----------------
@@ -74,19 +74,19 @@ forSpace space fn =
 -- Each cell is randomly choosen from the list.
 -- You might want to duplicate elements in the list to ajust the frequencys
 -- (probability to be choosen) of the cell values.
-randomSpace :: Space s => Int -> Int -> [a] -> IO (s a)
-randomSpace height width cellStateDist = initSpaceIO (height, width) $ \_ ->
+randomSpace :: Space s => (Int, Int) -> [a] -> IO (s a)
+randomSpace (height, width) cellStateDist = initSpaceIO (height, width) $ \_ ->
     (cellStateDist !!) <$> randomRIO (0, length cellStateDist - 1)
 
 -- | Initializes a space with a default background cell value and a few cells
 -- at given coordinates with individual values.
-initSpaceWithDefault :: Space s => a -> Int -> Int -> [((Int, Int), a)] -> s a
-initSpaceWithDefault defaultValue spaceWidth spaceHeight initCells =
-    setCells (initSpace (spaceHeight, spaceWidth) (const defaultValue)) initCells
+initSpaceWithCells :: Space s => (Int, Int) -> a -> [((Int, Int), a)] -> s a
+initSpaceWithCells (spaceWidth, spaceHeight) defaultValue =
+    setCells (initSpace (spaceHeight, spaceWidth) (const defaultValue))
 
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
-initSpaceWithCells :: Space s => Int -> Int -> [((Int, Int), Int)] -> s Int
-initSpaceWithCells = initSpaceWithDefault (0 :: Int)
+initIntSpaceWithCells :: Space s => (Int, Int) -> [((Int, Int), Int)] -> s Int
+initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 --------------------- updating and rules ----------------
 -- | Creates a rule from a function witch takes the cell value and a list of neightbors and
@@ -96,8 +96,8 @@ initSpaceWithCells = initSpaceWithDefault (0 :: Int)
 makeRuleWithNeighbors :: Space s => [(Int, Int)] -> (a -> [a] -> IO a) -> Rule s a
 makeRuleWithNeighbors neighborhoodDeltas ruleWithNeighbors
                       space (row, col) = ruleWithNeighbors self friends
-    where self = getCell (row, col) space
-          friends = map (\(dr, dc) -> getCell (row + dr, col + dc) space) neighborhoodDeltas
+    where self = getCell space (row, col)
+          friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) neighborhoodDeltas
 
 makeMoorRule, makeNeumanRule :: Space s => (a -> [a] -> IO a) -> Rule s a
 -- ^ Specialized version of makeRuleWithNeighbors for the Moor neightborhood.
