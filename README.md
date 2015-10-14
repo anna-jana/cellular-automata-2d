@@ -10,8 +10,6 @@ Install SDL, SDL-gfx and random.
     * Tests
     * infinite planes, moebius bands etc. as cellspace types
     * better ui
-    * more consistent functions
     * performance? e.g. only having tow arrays (less memory allocation)
     * cabal
-    * haddock
 
