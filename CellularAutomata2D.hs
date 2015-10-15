@@ -116,7 +116,7 @@ moorIndexDeltas = do
     guard $ not (dx == 0 && dy == 0)
     return (dy, dx)
 
--- | The von Neunman neightborhood.
+-- | The von Neunmann neightborhood.
 neumannIndexDeltas :: [(Int, Int)]
 neumannIndexDeltas = do
     dx <- [-1..1]; dy <- [-1..1]
