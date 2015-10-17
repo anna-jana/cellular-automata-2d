@@ -1,6 +1,7 @@
 module GUI (
     Color,
     white, black, grey, red, green, blue, cyan, brown, yellow, orange,
+    getColorFromRGB255,
     runCellularAutomata2D) where
 
 import qualified Graphics.UI.SDL as SDL
