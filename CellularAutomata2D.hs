@@ -108,7 +108,7 @@ initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 ----------------------------------- Helper for Rules ----------------------------------
 
--- | The Moor neightborhood, witch is used in most cellular automata like
+-- | The Moor neightborhood, witch is used in a lot cellular automata like
 -- conways game of life.
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = do

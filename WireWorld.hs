@@ -1,3 +1,5 @@
+module WireWorld where
+
 import CellularAutomata2D
 import GUI
 

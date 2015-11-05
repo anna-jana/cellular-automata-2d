@@ -1,3 +1,5 @@
+module Forest where
+
 import CellularAutomata2D
 import GUI
 import System.Random (randomRIO)

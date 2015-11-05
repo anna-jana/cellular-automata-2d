@@ -1,3 +1,5 @@
+module RockPaperScissors where
+
 import CellularAutomata2D
 import GUI
 

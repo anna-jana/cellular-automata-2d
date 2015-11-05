@@ -1,3 +1,5 @@
+module GameOfLife where
+
 import CellularAutomata2D
 import GUI
 import Term
