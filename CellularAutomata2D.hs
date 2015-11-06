@@ -108,7 +108,7 @@ initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 ----------------------------------- Helper for Rules ----------------------------------
 
--- | The Moor neightborhood, witch is used in a lot cellular automata like
+-- | The Moor neighborhood, witch is used in a lot cellular automata like
 -- conways game of life.
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = do
@@ -116,15 +116,15 @@ moorIndexDeltas = do
     guard $ not (dx == 0 && dy == 0)
     return (dy, dx)
 
--- | The von Neunmann neightborhood.
+-- | The von Neunmann neighborhood.
 neumannIndexDeltas :: [(Int, Int)]
 neumannIndexDeltas = do
     dx <- [-1..1]; dy <- [-1..1]
     guard $ (dx == 0) /= (dy == 0)
     return (dy, dx)
 
--- | Creates a life like automata from a list of neightborhood sizes in witch
--- a new cell is born and a list of neightborhood sizes where the cell stays
+-- | Creates a life like automata from a list of neighborhood sizes in witch
+-- a new cell is born and a list of neighborhood sizes where the cell stays
 -- alive. e.g. the game of life is makeTotalMoorRule [2,3] [3]
 makeTotalMoorRule :: [Int] -> [Int] -> Rule Int
 makeTotalMoorRule stayAlive getBorn = Rule moorIndexDeltas
