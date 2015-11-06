@@ -61,6 +61,7 @@ runCellularAutomata2D space states colors updateCell = do
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
     loop $ SimulationState screen colors cellSize'
         updateCell space 0 False states 3 0 0 1
+        (div screenWidth 2) (div screenHeight 2)
 
 data PrivateEvent
     = No
@@ -84,7 +85,8 @@ data SimulationState s a = SimulationState
     , possibleStates :: [a]
     , _fps :: Int
     , transX, transY :: Int -- ^ number of cells
-    , soom :: Float
+    , zoom :: Float
+    , halfWidth, halfHeight :: Int
     }
 
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
@@ -104,9 +106,9 @@ loop state = do
         GoRight -> loop state { transX = transX state + 1 }
         GoUp -> loop state { transY = transY state - 1 }
         GoDown -> loop state { transY = transY state + 1 }
-        SoomIn -> loop state { soom = soom state + 0.25 }
-        SoomOut -> loop state { soom = soom state - 0.25 }
-        Home -> loop state { transX = 0, transY = 0, soom = 1 }
+        SoomIn -> loop state { zoom = zoom state + 0.25 }
+        SoomOut -> loop state { zoom = zoom state - 0.25 }
+        Home -> loop state { transX = 0, transY = 0, zoom = 1 }
         No -> do
             draw state
             newSpace <- if running state
@@ -144,9 +146,9 @@ draw state = do
         void $ Draw.box
             (_screen state)
             (SDL.Rect
-                (round $ soom state * fromIntegral left)
-                (round $ soom state * fromIntegral top)
-                (round $ soom state * fromIntegral (left + cellSize state))
-                (round $ soom state * fromIntegral (top + cellSize state)))
+                (halfWidth state + round (zoom state * fromIntegral (left - halfWidth state)))
+                (halfHeight state + round (zoom state * fromIntegral (top - halfHeight state)))
+                (halfWidth state + round (zoom state * fromIntegral (left + cellSize state - halfWidth state)))
+                (halfHeight state + round (zoom state * fromIntegral (top + cellSize state + halfHeight state))))
             color
     SDL.flip (_screen state)
