@@ -60,7 +60,7 @@ runCellularAutomata2D space states colors updateCell = do
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
     loop $ SimulationState screen colors cellSize'
-        updateCell space 0 False states 3
+        updateCell space 0 False states 3 0 0 1
 
 data PrivateEvent
     = No
@@ -68,6 +68,9 @@ data PrivateEvent
     | Insert Int Int
     | NextColor
     | StartStop
+    | Home
+    | GoLeft | GoRight | GoUp | GoDown
+    | SoomIn | SoomOut
     deriving (Show, Eq)
 
 data SimulationState s a = SimulationState
@@ -80,6 +83,8 @@ data SimulationState s a = SimulationState
     , running :: Bool
     , possibleStates :: [a]
     , _fps :: Int
+    , transX, transY :: Int -- ^ number of cells
+    , soom :: Float
     }
 
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
@@ -95,6 +100,13 @@ loop state = do
         NextColor -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }
+        GoLeft -> loop state { transX = transX state - 1 }
+        GoRight -> loop state { transX = transX state + 1 }
+        GoUp -> loop state { transY = transY state - 1 }
+        GoDown -> loop state { transY = transY state + 1 }
+        SoomIn -> loop state { soom = soom state + 0.25 }
+        SoomOut -> loop state { soom = soom state - 0.25 }
+        Home -> loop state { transX = 0, transY = 0, soom = 1 }
         No -> do
             draw state
             newSpace <- if running state
@@ -112,6 +124,13 @@ loop state = do
                 return $ Insert (fromIntegral x) (fromIntegral y)
             SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
             SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> return GoLeft
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> return GoRight
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> return GoUp
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> return GoDown
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> return SoomIn
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> return SoomOut
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> return Home
             _ -> getEvent
         next x = head $ tail $ dropWhile (/= x) $ cycle (possibleStates state)
 
@@ -120,8 +139,14 @@ draw state = do
     SDL.fillRect (_screen state) Nothing (SDL.Pixel 0)
     forSpace (_space state) $ \(row, col) cell -> do
         let color = _colors state cell
-        let top = cellSize state * row
-        let left = cellSize state * col
-        void $ Draw.box (_screen state) (SDL.Rect left top
-            (left + cellSize state) (top + cellSize state)) color
+        let top = cellSize state * row + transY state * cellSize state
+        let left = cellSize state * col + transX state * cellSize state
+        void $ Draw.box
+            (_screen state)
+            (SDL.Rect
+                (round $ soom state * fromIntegral left)
+                (round $ soom state * fromIntegral top)
+                (round $ soom state * fromIntegral (left + cellSize state))
+                (round $ soom state * fromIntegral (top + cellSize state)))
+            color
     SDL.flip (_screen state)
