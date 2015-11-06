@@ -4,12 +4,13 @@ module GUI (
     getColorFromRGB255,
     runCellularAutomata2D) where
 
-import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.SDL.Primitives as Draw
-import Control.Monad (void)
+import Control.Monad (void, when)
 import Control.Concurrent (threadDelay)
 import Data.Bits
 import Data.Word (Word8)
+
+import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.SDL.Primitives as Draw
 
 import CellularAutomata2D
 
@@ -37,8 +38,8 @@ cyan = getColorFromRGB255 0 255 255
 brown = getColorFromRGB255 165 42 42
 orange = getColorFromRGB255 255 165 0
 
-targetScreenWidth :: Int
-targetScreenWidth = 500
+targetScreenSize :: Int
+targetScreenSize = 500
 
 -- | Runs a GUI for a 2d cellular automata using
 -- a given starting space, a list of cell states witch can be used
@@ -51,13 +52,15 @@ runCellularAutomata2D :: (Space s, Eq a) => s a -> [a] -> (a -> Color) ->
                                  Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (spaceHeight, spaceWidth) = getSpaceSize space
-    let actualCellSize = targetScreenWidth `div` spaceWidth
-    let screenWidth = spaceWidth * actualCellSize
-    let screenHeight = spaceHeight * actualCellSize
+    let cellSize' = if spaceHeight > spaceWidth
+           then targetScreenSize `div` spaceHeight
+           else targetScreenSize `div` spaceWidth
+    let screenHeight = cellSize' * spaceHeight
+    let screenWidth  = cellSize' * spaceWidth
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
-    loop $ SimulationState screen colors actualCellSize
-        updateCell space 0 False states
+    loop $ SimulationState screen colors cellSize'
+        updateCell space 0 False states 3
 
 data PrivateEvent
     = No
@@ -76,10 +79,12 @@ data SimulationState s a = SimulationState
     , accColor :: Int
     , running :: Bool
     , possibleStates :: [a]
+    , _fps :: Int
     }
 
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
 loop state = do
+    start <- SDL.getTicks
     event <- getEvent
     case event of
         Quit -> SDL.quit
@@ -92,10 +97,12 @@ loop state = do
         StartStop -> loop state { running = not (running state) }
         No -> do
             draw state
-            threadDelay $ 2 * 10 ^ (5 :: Int)
             newSpace <- if running state
                 then update (_space state) (updateCellFn state)
                 else return (_space state)
+            stop <- SDL.getTicks
+            let toDelay = 1 / realToFrac (_fps state) - realToFrac (stop - start) / 1000 :: Double
+            when (toDelay > 0) $ threadDelay $ round $ 10^(5::Int) * toDelay
             loop state { _space = newSpace }
     where
         getEvent = SDL.pollEvent >>= \e -> case e of
