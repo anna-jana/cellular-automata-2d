@@ -111,10 +111,10 @@ loop state = do
         NextColor -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }
-        GoLeft -> loop state { transX = transX state - 1 }
-        GoRight -> loop state { transX = transX state + 1 }
-        GoUp -> loop state { transY = transY state - 1 }
-        GoDown -> loop state { transY = transY state + 1 }
+        GoLeft -> loop state { transX = transX state + 1 }
+        GoRight -> loop state { transX = transX state - 1 }
+        GoUp -> loop state { transY = transY state + 1 }
+        GoDown -> loop state { transY = transY state - 1 }
         SoomIn -> loop state { zoom = zoom state + 0.25 }
         SoomOut -> loop state { zoom = zoom state - 0.25 }
         Home -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
