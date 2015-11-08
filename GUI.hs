@@ -64,7 +64,7 @@ runCellularAutomata2D space states colors updateCell = do
         (div screenWidth 2) (div screenHeight 2)
         [] False
 
-data PrivateEvent
+data Event
     = No
     | Quit
     | StopInserting
@@ -117,7 +117,7 @@ loop state = do
         GoDown -> loop state { transY = transY state + 1 }
         SoomIn -> loop state { zoom = zoom state + 0.25 }
         SoomOut -> loop state { zoom = zoom state - 0.25 }
-        Home -> loop state { transX = 0, transY = 0, zoom = 1 }
+        Home -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
         No -> do
             draw state
             newSpace <- if running state
@@ -144,7 +144,7 @@ loop state = do
             SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> return SoomOut
             SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> return Home
             _ -> getEvent
-        next x = head $ tail $ dropWhile (/= x) $ cycle (possibleStates state)
+        next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
 
 draw :: (Space s, Eq a) => SimulationState s a -> IO ()
 draw state = do
