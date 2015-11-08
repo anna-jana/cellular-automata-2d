@@ -62,10 +62,12 @@ runCellularAutomata2D space states colors updateCell = do
     loop $ SimulationState screen colors cellSize'
         updateCell space 0 False states 3 0 0 1
         (div screenWidth 2) (div screenHeight 2)
+        [] False
 
 data PrivateEvent
     = No
     | Quit
+    | StopInserting
     | Insert Int Int
     | NextColor
     | StartStop
@@ -87,6 +89,8 @@ data SimulationState s a = SimulationState
     , transX, transY :: Int -- ^ number of cells
     , zoom :: Float
     , halfWidth, halfHeight :: Int
+    , inserted :: [(Int, Int)]
+    , inserting :: Bool
     }
 
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
@@ -95,10 +99,15 @@ loop state = do
     event <- getEvent
     case event of
         Quit -> SDL.quit
+        StopInserting -> loop state { inserting = False, inserted = [] }
         Insert x y ->
             let cellIndex = (y `div` cellSize state, x `div` cellSize state) in
-                          loop state { _space = setCell (_space state) cellIndex
-                            (next (flip getCell cellIndex $ _space state)) }
+                if cellIndex `notElem` inserted state
+                   then loop state { _space = setCell (_space state) cellIndex
+                                                      (next (flip getCell cellIndex $ _space state)),
+                                     inserted = cellIndex : inserted state,
+                                     inserting = True }
+                   else loop state
         NextColor -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         StartStop -> loop state { running = not (running state) }
@@ -122,8 +131,9 @@ loop state = do
         getEvent = SDL.pollEvent >>= \e -> case e of
             SDL.NoEvent -> return No
             SDL.Quit -> return Quit
-            SDL.MouseButtonDown x y SDL.ButtonLeft  ->
-                return $ Insert (fromIntegral x) (fromIntegral y)
+            SDL.MouseButtonDown x y SDL.ButtonLeft -> return $ Insert (fromIntegral x) (fromIntegral y)
+            SDL.MouseButtonUp _ _ SDL.ButtonLeft -> return StopInserting
+            SDL.MouseMotion x y _ _ -> if inserting state then return $ Insert (fromIntegral x) (fromIntegral y) else getEvent
             SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
             SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
             SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> return GoLeft
