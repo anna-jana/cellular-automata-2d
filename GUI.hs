@@ -64,19 +64,6 @@ runCellularAutomata2D space states colors updateCell = do
         (div screenWidth 2) (div screenHeight 2)
         [] False
 
-data Event
-    = No
-    | Quit
-    | StopInserting
-    | Insert Int Int
-    | NextColor
-    | StartStop
-    | Home
-    | GoLeft | GoRight | GoUp | GoDown
-    | SoomIn | SoomOut
-    | Step
-    deriving (Show, Eq)
-
 data SimulationState s a = SimulationState
     { _screen :: SDL.Surface
     , _colors :: a -> SDL.Pixel
@@ -97,32 +84,28 @@ data SimulationState s a = SimulationState
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
 loop state = do
     start <- SDL.getTicks
-    event <- getEvent
+    event <- SDL.pollEvent
     case event of
-        Quit -> SDL.quit
-        StopInserting -> loop state { inserting = False, inserted = [] }
-        Insert x y ->
-            let cellIndex = (y `div` cellSize state, x `div` cellSize state) in
-                if cellIndex `notElem` inserted state
-                   then loop state { _space = setCell (_space state) cellIndex
-                                                      (next (flip getCell cellIndex $ _space state)),
-                                     inserted = cellIndex : inserted state,
-                                     inserting = True }
-                   else loop state
-        NextColor -> loop state { accColor = (accColor state + 1) `mod`
+        SDL.Quit -> SDL.quit
+        SDL.MouseButtonUp _ _ SDL.ButtonLeft -> loop state { inserting = False, inserted = [] }
+        SDL.MouseMotion x y _ _ -> if inserting state
+                                      then insert state x y
+                                      else loop state
+        SDL.MouseButtonDown x y SDL.ButtonLeft -> insert state { inserting = True } x y
+        SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
-        StartStop -> loop state { running = not (running state) }
-        GoLeft -> loop state { transX = transX state + 1 }
-        GoRight -> loop state { transX = transX state - 1 }
-        GoUp -> loop state { transY = transY state + 1 }
-        GoDown -> loop state { transY = transY state - 1 }
-        SoomIn -> loop state { zoom = zoom state + 0.25 }
-        SoomOut -> loop state { zoom = zoom state - 0.25 }
-        Home -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
-        Step -> if running state then loop state else
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> loop state { running = not (running state) }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { transX = transX state + 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { transX = transX state - 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { transY = transY state + 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { transY = transY state - 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = zoom state - 0.25 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> if running state then loop state else
                 update (_space state) (updateCellFn state) >>= \space' ->
                   loop state { _space = space' }
-        No -> do
+        SDL.NoEvent -> do
             draw state
             newSpace <- if running state
                 then update (_space state) (updateCellFn state)
@@ -131,25 +114,16 @@ loop state = do
             let toDelay = 1 / realToFrac (_fps state) - realToFrac (stop - start) / 1000 :: Double
             when (toDelay > 0) $ threadDelay $ round $ 10^(5::Int) * toDelay
             loop state { _space = newSpace }
+        _ -> loop state
     where
-        getEvent = SDL.pollEvent >>= \e -> case e of
-            SDL.NoEvent -> return No
-            SDL.Quit -> return Quit
-            SDL.MouseButtonDown x y SDL.ButtonLeft -> return $ Insert (fromIntegral x) (fromIntegral y)
-            SDL.MouseButtonUp _ _ SDL.ButtonLeft -> return StopInserting
-            SDL.MouseMotion x y _ _ -> if inserting state then return $ Insert (fromIntegral x) (fromIntegral y) else getEvent
-            SDL.MouseButtonDown _ _ SDL.ButtonRight -> return NextColor
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> return StartStop
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> return GoLeft
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> return GoRight
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> return GoUp
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> return GoDown
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> return SoomIn
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> return SoomOut
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> return Home
-            SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> return Step
-            _ -> getEvent
         next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
+        insert state' x y =
+            let cellIndex = (fromIntegral y `div` cellSize state', fromIntegral x `div` cellSize state') in
+                if cellIndex `notElem` inserted state'
+                   then loop state' { _space = setCell (_space state') cellIndex
+                                                      (next (flip getCell cellIndex $ _space state')),
+                                     inserted = cellIndex : inserted state' }
+                   else loop state'
 
 draw :: (Space s, Eq a) => SimulationState s a -> IO ()
 draw state = do
