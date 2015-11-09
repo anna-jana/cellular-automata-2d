@@ -74,6 +74,7 @@ data Event
     | Home
     | GoLeft | GoRight | GoUp | GoDown
     | SoomIn | SoomOut
+    | Step
     deriving (Show, Eq)
 
 data SimulationState s a = SimulationState
@@ -118,6 +119,9 @@ loop state = do
         SoomIn -> loop state { zoom = zoom state + 0.25 }
         SoomOut -> loop state { zoom = zoom state - 0.25 }
         Home -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
+        Step -> if running state then loop state else
+                update (_space state) (updateCellFn state) >>= \space' ->
+                  loop state { _space = space' }
         No -> do
             draw state
             newSpace <- if running state
@@ -143,6 +147,7 @@ loop state = do
             SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> return SoomIn
             SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> return SoomOut
             SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> return Home
+            SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> return Step
             _ -> getEvent
         next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
 
@@ -153,12 +158,11 @@ draw state = do
         let color = _colors state cell
         let top = cellSize state * row + transY state * cellSize state
         let left = cellSize state * col + transX state * cellSize state
-        void $ Draw.box
-            (_screen state)
-            (SDL.Rect
+        let rect = SDL.Rect
                 (halfWidth state + round (zoom state * fromIntegral (left - halfWidth state)))
                 (halfHeight state + round (zoom state * fromIntegral (top - halfHeight state)))
                 (halfWidth state + round (zoom state * fromIntegral (left + cellSize state - halfWidth state)))
-                (halfHeight state + round (zoom state * fromIntegral (top + cellSize state + halfHeight state))))
-            color
+                (halfHeight state + round (zoom state * fromIntegral (top + cellSize state + halfHeight state)))
+        void $ Draw.box (_screen state) rect color
+        void $ Draw.rectangle (_screen state) rect black
     SDL.flip (_screen state)

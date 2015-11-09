@@ -34,7 +34,7 @@ class Space s where
     getCell :: s a -> (Int, Int) -> a
     -- | Set a cell at a coordinate in the space to a new value.
     setCell :: s a -> (Int, Int) -> a -> s a
-    -- | Get the dimensions of the space.
+    -- | Get the dimensions of the space rows * columns
     getSpaceSize :: s a -> (Int, Int)
     -- | Initializes the space using a given function that takes a coordinate
     -- and returns the cell value in the IO Monad (so you can easily e.g. generate
