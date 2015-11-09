@@ -1,6 +1,6 @@
 ## Cellular Automata 2D
 
-Old (even if the repo. isn't that old), messy code for 2D Cellular Automata (also stochastic ones) in Haskell.
+Code for 2D Cellular Automata (also stochastic ones) in Haskell.
 
 ### Install
 No cabal file.
