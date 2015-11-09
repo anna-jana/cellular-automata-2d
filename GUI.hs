@@ -123,6 +123,8 @@ loop state = do
                        , transY = moveY state + transY state }
         _ -> loop state
     where
+        -- FIXME: if you have states witch do not appeare in the possibleStates list,
+        -- next goes into an infinit loop.
         next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
         insert state' x y =
             let cellIndex = (fromIntegral y `div` cellSize state', fromIntegral x `div` cellSize state') in

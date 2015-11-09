@@ -11,7 +11,8 @@ module CellularAutomata2D (
     -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
-    choice) where
+    choice,
+    makeReversibleRule) where
 
 import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, (!), Array, (//))
@@ -139,3 +140,11 @@ makeTotalMoorRule stayAlive getBorn = Rule moorIndexDeltas
 -- O(n)
 choice :: [a] -> IO a
 choice xs = (xs !!) `fmap` randomRIO (0, length xs - 1)
+
+-- | Creates a reversible rule from a non reversible rule by remembering the state and always
+-- xoring the new state with the old one.
+makeReversibleRule :: Rule Int -> Rule (Int, Int)
+makeReversibleRule rule = Rule
+    (ruleNeighborhoodDeltas rule)
+    (\(c', c) cs -> ruleFunction rule c (map snd cs) >>= \nextC -> return (c, if c' /= nextC then 1 else 0))
+
