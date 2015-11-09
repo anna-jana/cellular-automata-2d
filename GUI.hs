@@ -62,7 +62,7 @@ runCellularAutomata2D space states colors updateCell = do
     loop $ SimulationState screen colors cellSize'
         updateCell space 0 False states 3 0 0 1
         (div screenWidth 2) (div screenHeight 2)
-        [] False
+        [] False 0 0
 
 data SimulationState s a = SimulationState
     { _screen :: SDL.Surface
@@ -79,6 +79,7 @@ data SimulationState s a = SimulationState
     , halfWidth, halfHeight :: Int
     , inserted :: [(Int, Int)]
     , inserting :: Bool
+    , moveX :: Int, moveY :: Int
     }
 
 loop :: (Eq a, Space s) => SimulationState s a -> IO ()
@@ -95,10 +96,14 @@ loop state = do
         SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
         SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> loop state { running = not (running state) }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { transX = transX state + 1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { transX = transX state - 1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { transY = transY state + 1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { transY = transY state - 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = -1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = -1 }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 0 }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = 0 }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 0 }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = 0 }
         SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25 }
         SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = zoom state - 0.25 }
         SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
@@ -113,7 +118,9 @@ loop state = do
             stop <- SDL.getTicks
             let toDelay = 1 / realToFrac (_fps state) - realToFrac (stop - start) / 1000 :: Double
             when (toDelay > 0) $ threadDelay $ round $ 10^(5::Int) * toDelay
-            loop state { _space = newSpace }
+            loop state { _space = newSpace
+                       , transX = moveX state + transX state
+                       , transY = moveY state + transY state }
         _ -> loop state
     where
         next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
@@ -133,10 +140,10 @@ draw state = do
         let top = cellSize state * row + transY state * cellSize state
         let left = cellSize state * col + transX state * cellSize state
         let rect = SDL.Rect
-                (halfWidth state + round (zoom state * fromIntegral (left - halfWidth state)))
-                (halfHeight state + round (zoom state * fromIntegral (top - halfHeight state)))
-                (halfWidth state + round (zoom state * fromIntegral (left + cellSize state - halfWidth state)))
-                (halfHeight state + round (zoom state * fromIntegral (top + cellSize state + halfHeight state)))
+                (round (zoom state * fromIntegral (left - halfWidth state)) + halfWidth state)
+                (round (zoom state * fromIntegral (top - halfHeight state)) + halfHeight state)
+                (round (zoom state * fromIntegral (left + cellSize state - halfWidth state)) + halfWidth state)
+                (round (zoom state * fromIntegral (top + cellSize state - halfHeight state)) + halfHeight state)
         void $ Draw.box (_screen state) rect color
         void $ Draw.rectangle (_screen state) rect black
     SDL.flip (_screen state)
