@@ -48,7 +48,7 @@ targetScreenSize = 500
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
-runCellularAutomata2D :: (Space s, Eq a) => s a -> [a] -> (a -> Color) ->
+runCellularAutomata2D :: (Eq a) => Torus a -> [a] -> (a -> Color) ->
                                  Rule a -> IO ()
 runCellularAutomata2D space states colors updateCell = do
     let (spaceHeight, spaceWidth) = getSpaceSize space
@@ -64,12 +64,12 @@ runCellularAutomata2D space states colors updateCell = do
         (div screenWidth 2) (div screenHeight 2)
         [] False 0 0
 
-data SimulationState s a = SimulationState
+data SimulationState a = SimulationState
     { _screen :: SDL.Surface
     , _colors :: a -> SDL.Pixel
     , cellSize :: Int
     , updateCellFn :: Rule a
-    , _space :: s a
+    , _space :: Torus a
     , accColor :: Int
     , running :: Bool
     , possibleStates :: [a]
@@ -82,7 +82,7 @@ data SimulationState s a = SimulationState
     , moveX :: Int, moveY :: Int
     }
 
-loop :: (Eq a, Space s) => SimulationState s a -> IO ()
+loop :: (Eq a) => SimulationState a -> IO ()
 loop state = do
     start <- SDL.getTicks
     event <- SDL.pollEvent
@@ -134,7 +134,7 @@ loop state = do
                                      inserted = cellIndex : inserted state' }
                    else loop state'
 
-draw :: (Space s, Eq a) => SimulationState s a -> IO ()
+draw :: (Eq a) => SimulationState a -> IO ()
 draw state = do
     SDL.fillRect (_screen state) Nothing (SDL.Pixel 0)
     forSpace (_space state) $ \(row, col) cell -> do

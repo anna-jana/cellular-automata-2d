@@ -8,14 +8,14 @@ import CellularAutomata2D
 -- a function witch returns a char for a cell state,
 -- an initial space and a rule.
 -- The user can press enter to view the next generation.
-runInTerminal :: Space s => (a -> Char) -> s a -> Rule a -> IO ()
+runInTerminal :: (a -> Char) -> Torus a -> Rule a -> IO ()
 runInTerminal char space rule = do
     printSpace char space
     getLine
     space' <- update space rule
     runInTerminal char space' rule
 
-printSpace :: Space s => (a -> Char) -> s a -> IO ()
+printSpace :: (a -> Char) -> Torus a -> IO ()
 printSpace char space = forSpace space $ \(_, col) cell -> do
         putChar (char cell)
         when (col == spaceWidth - 1) $ putChar '\n'

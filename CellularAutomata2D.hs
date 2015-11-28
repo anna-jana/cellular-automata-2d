@@ -1,9 +1,12 @@
 module CellularAutomata2D (
-    -- * General Concepts
+    -- * Rules
     Rule(..),
-    Space(..),
     -- * Torus shaped space
     Torus(..),
+    getCell, setCell, setCells,
+    getSpaceSize,
+    initSpace, initSpaceIO,
+    update,
     -- * Space Utils
     forSpace,
     -- * Initializing Spaces
@@ -30,58 +33,58 @@ data Rule a = Rule
     , ruleFunction :: a -> [a] -> IO a
     }
 
-class Space s where
-    -- | Get a cell at a coordinate in the space.
-    getCell :: s a -> (Int, Int) -> a
-    -- | Set a cell at a coordinate in the space to a new value.
-    setCell :: s a -> (Int, Int) -> a -> s a
-    -- | Get the dimensions of the space rows * columns
-    getSpaceSize :: s a -> (Int, Int)
-    -- | Initializes the space using a given function that takes a coordinate
-    -- and returns the cell value in the IO Monad (so you can easily e.g. generate
-    -- a random space configuration).
-    initSpaceIO :: (Int, Int) -> ((Int, Int) -> IO a) -> IO (s a)
-    -- | Initializes the space using a pure function witch take the coordinate of
-    -- the cell and returns the cell value
-    initSpace :: (Int, Int) -> ((Int, Int) -> a) -> s a
-
-    -- | Set a bunch of cells specified by there coordinate to new values.
-    -- This function has a default implementation in terms of setCell
-    -- but it might be specialized for performence purposes.
-    setCells :: s a -> [((Int, Int), a)] -> s a
-    setCells = foldl (\s (i, v) -> setCell s i v)
-
-    -- | Updates a given space by one generation using a given rule.
-    update :: s a -> Rule a -> IO (s a)
-    update space rule = initSpaceIO (getSpaceSize space) updateCell
-      where
-          updateCell (row, col) = ruleFunction rule self friends
-            where
-              friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) (ruleNeighborhoodDeltas rule)
-              self = getCell space (row, col)
-
 ------------------------------- Torus shaped space -------------------------
 -- | A Torus is basicly a plane with top and botton connected as well as left and right connected.
 newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
 
-instance Space Torus where
-    getCell (Torus a) (row, col) = a ! (row `mod` h, col `mod` w)
-        where (h, w) = getSpaceSize (Torus a)
-    setCell (Torus space) index cell = Torus $ space // [(index, cell)]
-    setCells (Torus space) cells = Torus $ space // cells
-    getSpaceSize (Torus space) = (maxRow + 1, maxCol + 1)
-        where (_, (maxRow, maxCol)) = bounds space
-    initSpaceIO (h, w) initFn = Torus . listArray ((0, 0), (h - 1, w - 1)) <$>
-        sequence [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
-    initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
-        [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
+-- | Get a cell at a coordinate in the space.
+getCell :: Torus a -> (Int, Int) -> a
+getCell (Torus a) (row, col) = a ! (row `mod` h, col `mod` w)
+    where (h, w) = getSpaceSize (Torus a)
+
+-- | Set a cell at a coordinate in the space to a new value.
+setCell :: Torus a -> (Int, Int) -> a -> Torus a
+setCell (Torus space) index cell = Torus $ space // [(index, cell)]
+
+-- | Set a bunch of cells specified by there coordinate to new values.
+-- This function has a default implementation in terms of setCell
+-- but it might be specialized for performence purposes.
+setCells :: Torus a -> [((Int, Int), a)] -> Torus a
+setCells (Torus space) cells = Torus $ space // cells
+
+-- | Get the dimensions of the space rows * columns
+getSpaceSize :: Torus a -> (Int, Int)
+getSpaceSize (Torus space) = (maxRow + 1, maxCol + 1)
+    where (_, (maxRow, maxCol)) = bounds space
+
+-- | Initializes the space using a given function that takes a coordinate
+-- and returns the cell value in the IO Monad (so you can easily e.g. generate
+-- a random space configuration).
+initSpaceIO :: (Int, Int) -> ((Int, Int) -> IO a) -> IO (Torus a)
+initSpaceIO (h, w) initFn = Torus . listArray ((0, 0), (h - 1, w - 1)) <$>
+    sequence [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
+
+-- | Initializes the space using a pure function witch take the coordinate of
+-- the cell and returns the cell value
+initSpace :: (Int, Int) -> ((Int, Int) -> a) -> Torus a
+initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
+    [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
+
+-- | Updates a given space by one generation using a given rule.
+update :: Torus a -> Rule a -> IO (Torus a)
+update space rule = initSpaceIO (getSpaceSize space) updateCell
+  where
+      updateCell (row, col) = ruleFunction rule self friends
+        where
+          friends = map (\(dr, dc) -> getCell space (row + dr, col + dc)) (ruleNeighborhoodDeltas rule)
+          self = getCell space (row, col)
 
 ----------------------------------- Space Utils -------------------------------
 
 -- | Iterates over a given space and calls a given function on the
 -- coordinate and value of each cells.
 -- This is done in row mayor order.
-forSpace :: Space s => s a -> ((Int, Int) -> a -> IO ()) -> IO ()
+forSpace :: Torus a -> ((Int, Int) -> a -> IO ()) -> IO ()
 forSpace space fn =
     forM_ [0..spaceHeight - 1] $ \row ->
         forM_ [0..spaceWidth - 1] $ \col ->
@@ -94,17 +97,17 @@ forSpace space fn =
 -- Each cell is randomly choosen from the list.
 -- You might want to duplicate elements in the list to ajust the frequencys
 -- (probability to be choosen) of the cell values.
-randomSpace :: Space s => (Int, Int) -> [a] -> IO (s a)
+randomSpace :: (Int, Int) -> [a] -> IO (Torus a)
 randomSpace (height, width) cellStateDist = initSpaceIO (height, width) $ const $ choice cellStateDist
 
 -- | Initializes a space with a default background cell value and a few cells
 -- at given coordinates with individual values.
-initSpaceWithCells :: Space s => (Int, Int) -> a -> [((Int, Int), a)] -> s a
+initSpaceWithCells :: (Int, Int) -> a -> [((Int, Int), a)] -> Torus a
 initSpaceWithCells (spaceWidth, spaceHeight) defaultValue =
     setCells (initSpace (spaceHeight, spaceWidth) (const defaultValue))
 
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
-initIntSpaceWithCells :: Space s => (Int, Int) -> [((Int, Int), Int)] -> s Int
+initIntSpaceWithCells :: (Int, Int) -> [((Int, Int), Int)] -> Torus Int
 initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
 ----------------------------------- Helper for Rules ----------------------------------

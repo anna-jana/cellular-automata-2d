@@ -7,10 +7,10 @@ import Term
 main :: IO ()
 main = gol glieder
 
-termGOL :: Space s => s Int -> IO ()
+termGOL :: Torus Int -> IO ()
 termGOL space = runInTerminal ("_#"!!) space golRule
 
-gol :: Space s => s Int -> IO ()
+gol :: Torus Int -> IO ()
 gol space = runCellularAutomata2D space [0,1] ([black, white] !!) golRule
 
 glieder :: Torus Int
