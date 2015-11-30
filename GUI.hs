@@ -131,10 +131,16 @@ loop state = do
                                                       (next (flip getCell cellIndex $ _space state')),
                                      inserted = cellIndex : inserted state' }
                    else loop state'
-                where cellIndex = (fromIntegral y `div` cellSize state' - transY state',
-                                   fromIntegral x `div` cellSize state' - transX state')
+                where cellIndex = ((floor (fromIntegral (fromIntegral y - halfHeight state)/zoom state) + halfHeight state) `div` cellSize state - transY state,
+                                   (floor (fromIntegral (fromIntegral x - halfWidth state)/zoom state) + halfWidth state) `div` cellSize state - transX state)
                       isOutside = fst cellIndex < 0 || fst cellIndex >= fst (getSpaceSize $ _space state) ||
                                 snd cellIndex < 0 || snd cellIndex >= snd (getSpaceSize $ _space state)
+
+-- x -> col
+-- col = ((x - w/2)/zoom + w/2)/cellSize - transX
+-- col -> x
+-- x = zoom*((col + transX)*cellSize - w/2) + w/2
+
 
 draw :: (Eq a) => SimulationState a -> IO ()
 draw state = do
