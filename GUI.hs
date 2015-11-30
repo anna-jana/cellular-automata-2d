@@ -89,9 +89,9 @@ loop state = do
     case event of
         SDL.Quit -> SDL.quit
         SDL.MouseButtonUp _ _ SDL.ButtonLeft -> loop state { inserting = False, inserted = [] }
-        SDL.MouseMotion x y _ _ -> if inserting state
-                                      then insert state x y
-                                      else loop state
+        SDL.MouseMotion x y _ _
+            | inserting state -> insert state x y
+            | otherwise -> loop state
         SDL.MouseButtonDown x y SDL.ButtonLeft -> insert state { inserting = True } x y
         SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { accColor = (accColor state + 1) `mod`
             length (possibleStates state) }
@@ -126,13 +126,15 @@ loop state = do
         -- FIXME: if you have states witch do not appeare in the possibleStates list,
         -- next goes into an infinit loop.
         next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
-        insert state' x y =
-            let cellIndex = (fromIntegral y `div` cellSize state', fromIntegral x `div` cellSize state') in
-                if cellIndex `notElem` inserted state'
+        insert state' x y = if not isOutside && cellIndex `notElem` inserted state'
                    then loop state' { _space = setCell (_space state') cellIndex
                                                       (next (flip getCell cellIndex $ _space state')),
                                      inserted = cellIndex : inserted state' }
                    else loop state'
+                where cellIndex = (fromIntegral y `div` cellSize state' - transY state',
+                                   fromIntegral x `div` cellSize state' - transX state')
+                      isOutside = fst cellIndex < 0 || fst cellIndex >= fst (getSpaceSize $ _space state) ||
+                                snd cellIndex < 0 || snd cellIndex >= snd (getSpaceSize $ _space state)
 
 draw :: (Eq a) => SimulationState a -> IO ()
 draw state = do
