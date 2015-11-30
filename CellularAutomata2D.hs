@@ -19,7 +19,7 @@ module CellularAutomata2D (
 
 import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, (!), Array, (//))
-import Control.Monad (forM_, guard)
+import Control.Monad (forM_)
 import Control.Applicative ((<$>))
 
 -------------------------------- General Concepts ------------------------------
@@ -47,8 +47,6 @@ setCell :: Torus a -> (Int, Int) -> a -> Torus a
 setCell (Torus space) index cell = Torus $ space // [(index, cell)]
 
 -- | Set a bunch of cells specified by there coordinate to new values.
--- This function has a default implementation in terms of setCell
--- but it might be specialized for performence purposes.
 setCells :: Torus a -> [((Int, Int), a)] -> Torus a
 setCells (Torus space) cells = Torus $ space // cells
 
@@ -98,13 +96,12 @@ forSpace space fn =
 -- You might want to duplicate elements in the list to ajust the frequencys
 -- (probability to be choosen) of the cell values.
 randomSpace :: (Int, Int) -> [a] -> IO (Torus a)
-randomSpace (height, width) cellStateDist = initSpaceIO (height, width) $ const $ choice cellStateDist
+randomSpace shape cellStateDist = initSpaceIO shape $ const $ choice cellStateDist
 
 -- | Initializes a space with a default background cell value and a few cells
 -- at given coordinates with individual values.
 initSpaceWithCells :: (Int, Int) -> a -> [((Int, Int), a)] -> Torus a
-initSpaceWithCells (spaceWidth, spaceHeight) defaultValue =
-    setCells (initSpace (spaceHeight, spaceWidth) (const defaultValue))
+initSpaceWithCells shape defaultValue = setCells (initSpace shape (const defaultValue))
 
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
 initIntSpaceWithCells :: (Int, Int) -> [((Int, Int), Int)] -> Torus Int
@@ -115,17 +112,11 @@ initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 -- | The Moor neighborhood, witch is used in a lot cellular automata like
 -- conways game of life.
 moorIndexDeltas :: [(Int, Int)]
-moorIndexDeltas = do
-    dx <- [-1..1]; dy <- [-1..1]
-    guard $ not (dx == 0 && dy == 0)
-    return (dy, dx)
+moorIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], not (dx == 0 && dy == 0)]
 
 -- | The von Neunmann neighborhood.
 neumannIndexDeltas :: [(Int, Int)]
-neumannIndexDeltas = do
-    dx <- [-1..1]; dy <- [-1..1]
-    guard $ (dx == 0) /= (dy == 0)
-    return (dy, dx)
+neumannIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], (dx == 0) /= (dy == 0)]
 
 -- | Creates a life like automata from a list of neighborhood sizes in witch
 -- a new cell is born and a list of neighborhood sizes where the cell stays
@@ -150,4 +141,3 @@ makeReversibleRule :: Rule Int -> Rule (Int, Int)
 makeReversibleRule rule = Rule
     (ruleNeighborhoodDeltas rule)
     (\(c', c) cs -> ruleFunction rule c (map snd cs) >>= \nextC -> return (c, if c' /= nextC then 1 else 0))
-
