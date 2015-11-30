@@ -9,6 +9,6 @@ Install SDL, SDL-gfx and random.
 ### TODO
     * Tests
     * better ui
-    * performance? e.g. only having tow arrays (less memory allocation)
+    * performance? e.g. only having two arrays (less memory allocation)
     * cabal
 
