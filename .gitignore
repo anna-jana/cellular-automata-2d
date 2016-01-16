@@ -9,3 +9,6 @@ WireWorld
 VonNeumann
 doc/*
 info/*
+cabal.sandbox.config
+dist
+.cabal-sandbox
