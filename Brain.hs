@@ -5,18 +5,19 @@ import GUI
 
 main :: IO ()
 main = do
-    space <- randomSpace (50, 50) [Ready, Firing, Refractory] :: IO (Torus Cell)
-    runCellularAutomata2D space [Ready, Firing, Refractory]
-        colors (Rule moorIndexDeltas (\self -> return . rule self))
+    space <- randomSpace (50, 50) [Ready, Firing, Refractory] :: IO (Torus Neuron)
+    runCellularAutomata2D space (Rule moorIndexDeltas (\self -> return . rule self))
 
-data Cell = Ready | Firing | Refractory deriving (Show, Eq)
+data Neuron = Ready | Firing | Refractory deriving (Show, Eq, Bounded, Enum)
 
-colors :: Cell -> Color
-colors Ready = white
-colors Firing = black
-colors Refractory = grey
+instance Cell Neuron where
+    getColor Ready = white
+    getColor Firing = black
+    getColor Refractory = grey
 
-rule :: Cell -> [Cell] -> Cell
+    getSuccState = cycleEnum
+
+rule :: Neuron -> [Neuron] -> Neuron
 rule Ready friends
     | length (filter (== Firing) friends) == 2 = Firing
     | otherwise = Ready

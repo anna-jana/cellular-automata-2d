@@ -2,16 +2,12 @@ module GameOfLife where
 
 import CellularAutomata2D
 import GUI
-import Term
 
 main :: IO ()
 main = gol glieder
 
-termGOL :: Torus Int -> IO ()
-termGOL space = runInTerminal ("_#"!!) space golRule
-
 gol :: Torus Int -> IO ()
-gol space = runCellularAutomata2D space [0,1] ([black, white] !!) golRule
+gol space = runCellularAutomata2D space  golRule
 
 glieder :: Torus Int
 glieder = initIntSpaceWithCells (20, 20)
@@ -19,3 +15,8 @@ glieder = initIntSpaceWithCells (20, 20)
 
 golRule :: Rule Int
 golRule = makeTotalMoorRule [2,3] [3]
+
+instance Cell Int where
+    getColor = ([white, black] !!)
+    getSuccState 0 = 1
+    getSuccState 1 = 0

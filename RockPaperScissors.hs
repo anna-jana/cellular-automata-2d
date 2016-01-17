@@ -5,29 +5,27 @@ import GUI
 
 main :: IO ()
 main = do
-    let space = initSpaceWithCells (50, 50) (Cell White maxLives) [] :: Torus Cell
-    runCellularAutomata2D space
-        (map (flip Cell maxLives) [Red, Green, Blue, White])
-        colors (Rule moorIndexDeltas updateCell)
+    let space = initSpaceWithCells (50, 50) (RPSCell White maxLives) [] :: Torus RPSCell
+    runCellularAutomata2D space (Rule moorIndexDeltas updateCell)
 
-data CellColor = Red | Green | Blue | White deriving (Show, Eq)
-data Cell = Cell { color :: CellColor, lives :: Int } deriving (Show, Eq)
+data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum)
+data RPSCell = RPSCell { color :: CellColor, lives :: Int } deriving (Show, Eq)
 
 maxLives :: Int
 maxLives = 4
 
-updateCell :: Cell -> [Cell] -> IO Cell
+updateCell :: RPSCell -> [RPSCell] -> IO RPSCell
 updateCell self friends = fight self `fmap` choice friends
 
-fight :: Cell -> Cell -> Cell
+fight :: RPSCell -> RPSCell -> RPSCell
 fight toUpdate other
-    | color toUpdate == White = Cell (color other) maxLives
+    | color toUpdate == White = RPSCell (color other) maxLives
     | color other == White = toUpdate
     | color toUpdate == color other = toUpdate
     | better (color toUpdate) (color other) =
         toUpdate { lives = min (lives toUpdate + 1) maxLives }
     | otherwise = let updated = toUpdate { lives = lives toUpdate - 1 } in
-        if lives updated == 0 then Cell (color other) maxLives else updated
+        if lives updated == 0 then RPSCell (color other) maxLives else updated
 
 better :: CellColor -> CellColor -> Bool
 better Red Blue = True
@@ -35,11 +33,12 @@ better Green Red = True
 better Blue Green = True
 better _ _ = False
 
-colors :: Cell -> Color
-colors = getColor . color
+instance Cell RPSCell where
+    getColor = getColorOfColor . color
+    getSuccState c = c { color = cycleEnum $ color c }
 
-getColor :: CellColor -> Color
-getColor White = white
-getColor Red   = red
-getColor Blue  = blue
-getColor Green = green
+getColorOfColor :: CellColor -> Color
+getColorOfColor White = white
+getColorOfColor Red   = red
+getColorOfColor Blue  = blue
+getColorOfColor Green = green

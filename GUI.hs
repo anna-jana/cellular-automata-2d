@@ -1,4 +1,5 @@
 module GUI (
+    Cell(..), cycleEnum,
     Color,
     getColorFromRGB255,
     white, black, grey, red, green, blue, cyan, brown, yellow, orange,
@@ -13,6 +14,18 @@ import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as Draw
 
 import CellularAutomata2D
+
+cycleEnum :: (Eq a, Bounded a, Enum a) => a -> a
+cycleEnum x = if x == maxBound then minBound else succ x
+
+class Cell c where
+    getColor :: c -> Color
+    getSuccState :: c -> c
+
+instance Cell Bool where
+    getColor False = white
+    getColor True = black
+    getSuccState = cycleEnum
 
 -- | Colors for the different cell values.
 -- On my machine mapRGBA didn't work, so I created my own colors
@@ -51,9 +64,8 @@ targetScreenSize = 500
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
-runCellularAutomata2D :: (Eq a) => Torus a -> [a] -> (a -> Color) ->
-                                 Rule a -> IO ()
-runCellularAutomata2D space states colors updateCell = do
+runCellularAutomata2D :: (Eq a, Cell a) => Torus a -> Rule a -> IO ()
+runCellularAutomata2D space updateCell = do
     -- compute our window dimensions
     let (spaceHeight, spaceWidth) = getSpaceSize space
     let cellSize' = if spaceHeight > spaceWidth
@@ -65,20 +77,28 @@ runCellularAutomata2D space states colors updateCell = do
     SDL.init []
     screen <- SDL.setVideoMode screenWidth screenHeight 32 [SDL.DoubleBuf]
     -- start the game loop
-    loop $ SimulationState screen colors cellSize'
-        updateCell space 0 False states 3 0 0 1
-        (div screenWidth 2) (div screenHeight 2)
-        [] False 0 0
+    loop SimulationState
+        { getScreen = screen
+        , cellSize = cellSize'
+        , updateCellFn = updateCell
+        , getSpace = space
+        , stateStep = 1
+        , running = False
+        , getFPS = 3
+        , transX = 0, transY = 0, zoom = 1.0
+        , halfWidth = div screenWidth 2, halfHeight = div screenHeight 2
+        , inserted = []
+        , inserting = False
+        , moveX = 0, moveY = 0
+        }
 
 data SimulationState a = SimulationState
     { getScreen :: SDL.Surface
-    , getColor :: a -> SDL.Pixel
     , cellSize :: Int
     , updateCellFn :: Rule a
     , getSpace :: Torus a
-    , accColor :: Int
+    , stateStep :: Int
     , running :: Bool
-    , possibleStates :: [a]
     , getFPS :: Int
     , transX, transY :: Int -- ^ number of cells
     , zoom :: Float
@@ -89,7 +109,7 @@ data SimulationState a = SimulationState
     }
 
 -- | the game loop
-loop :: (Eq a) => SimulationState a -> IO ()
+loop :: (Eq a, Cell a) => SimulationState a -> IO ()
 loop state = do
     start <- SDL.getTicks
     -- get an event and process it
@@ -101,8 +121,7 @@ loop state = do
             | inserting state -> insert state x y -- inserting new cells
             | otherwise -> loop state
         SDL.MouseButtonDown x y SDL.ButtonLeft -> insert state { inserting = True } x y -- start changing cells
-        SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { accColor = (accColor state + 1) `mod`
-            length (possibleStates state) }
+        SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { stateStep = stateStep state + 1 } -- TODO dec.?
         -- toogle running (update of the world)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> loop state { running = not (running state) }
         -- move the users view on the world
@@ -118,7 +137,7 @@ loop state = do
         SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25 }
         SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = zoom state - 0.25 }
         -- reset our view (no zoom or translation)
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, accColor = 0 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, stateStep = 1 }
         -- advance for one generation (only if we aren't running)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> if running state then loop state else
                 update (getSpace state) (updateCellFn state) >>= \space' ->
@@ -139,13 +158,10 @@ loop state = do
                        , transY = moveY state + transY state }
         _ -> loop state
     where
-        -- FIXME: if you have states witch do not appeare in the possibleStates list,
-        -- next goes into an infinit loop.
-        next x = tail (dropWhile (/= x) $ cycle (possibleStates state)) !! accColor state
         -- change the cell state at a given pixel coordinate
         insert state' x y = if not isOutside && cellIndex `notElem` inserted state'
                    then loop state' { getSpace = setCell (getSpace state') cellIndex
-                                                      (next (flip getCell cellIndex $ getSpace state')),
+                                                      (iterate getSuccState (flip getCell cellIndex $ getSpace state') !! stateStep state),
                                      inserted = cellIndex : inserted state' }
                    else loop state'
                 where cellIndex = ((floor (fromIntegral (fromIntegral y - halfHeight state)/zoom state) + halfHeight state) `div` cellSize state - transY state,
@@ -159,7 +175,7 @@ loop state = do
 -- x = zoom*((col + transX)*cellSize - w/2) + w/2
 
 -- | draw the state of the automata to the window
-draw :: (Eq a) => SimulationState a -> IO ()
+draw :: (Eq a, Cell a) => SimulationState a -> IO ()
 draw state = do
     -- clear the window
     SDL.fillRect (getScreen state) Nothing (SDL.Pixel 0)
@@ -173,7 +189,7 @@ draw state = do
                 (round (zoom state * fromIntegral (left + cellSize state - halfWidth state)) + halfWidth state)
                 (round (zoom state * fromIntegral (top + cellSize state - halfHeight state)) + halfHeight state)
         -- draw cell
-        let color = getColor state cell
+        let color = getColor cell
         void $ Draw.box (getScreen state) rect color
         -- draw the grid
         void $ Draw.rectangle (getScreen state) rect black

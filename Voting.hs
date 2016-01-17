@@ -10,7 +10,7 @@ main = do
     -- space <- randomSpace size [True, False]
     -- runCellularAutomata2D space [True, False] (\c -> if c then white else black) anneal
     space <- randomSpace size [0,1]
-    runCellularAutomata2D space [0,1] (\c -> if c == 1 then white else black) banks
+    runCellularAutomata2D space  banks
 
 banks :: Rule Int
 banks = Rule neumannIndexDeltas $ \self neighbors ->
@@ -35,3 +35,8 @@ circle = initSpace size (\(row, col) -> 20 >=
 
 size :: (Int, Int)
 size = (50, 50)
+
+instance Cell Int where
+    getColor = ([white, black] !!)
+    getSuccState 0 = 1
+    getSuccState 1 = 0

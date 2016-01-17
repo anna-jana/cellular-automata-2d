@@ -4,13 +4,12 @@ import CellularAutomata2D
 import GUI
 import System.Random (randomRIO)
 
-data Wood = Tree | Empty | Fire deriving (Show, Eq)
+data Wood = Tree | Empty | Fire deriving (Show, Eq, Bounded, Enum)
 
 main :: IO ()
 main = do
     space <- randomSpace (150, 150) [Empty, Tree] :: IO (Torus Wood)
-    runCellularAutomata2D space [Tree, Empty, Fire] colors
-        (Rule moorIndexDeltas updateCell)
+    runCellularAutomata2D space (Rule moorIndexDeltas updateCell)
 
 newFireProp, newTreeProp :: Float
 newFireProp = 1 - 0.999
@@ -29,7 +28,11 @@ updateCell Empty _ = do
         then Tree
         else Empty
 
-colors :: Wood -> Color
-colors Fire = red
-colors Tree = green
-colors Empty = brown
+instance Cell Wood where
+    getColor Fire = red
+    getColor Tree = green
+    getColor Empty = brown
+
+    getSuccState = cycleEnum
+
+
