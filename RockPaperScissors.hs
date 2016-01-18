@@ -1,32 +1,45 @@
+-- | A cellular automaton witch simulates a lot of rock paper scissor games or
+--   something witch is simular to ocillatiing chemical reactions.
 module RockPaperScissors where
 
 import CellularAutomata2D
 import GUI
 
+-- Simulate the rock paper scissors automaton
 main :: IO ()
 main = do
-    let space = initSpaceWithCells (50, 50) (RPSCell White maxLives) [] :: Torus RPSCell
-    runCellularAutomata2D space (Rule moorIndexDeltas updateCell)
+    let space = initSpaceWithCells (50, 50) (RPSCell White maxLifes) [] :: Torus RPSCell
+    runCellularAutomata2D space rockPaperScissorsRule
 
+-- Every cell can have a color of be white (empty)
 data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum)
+-- A cell has also a number of lives.
 data RPSCell = RPSCell { color :: CellColor, lives :: Int } deriving (Show, Eq)
 
-maxLives :: Int
-maxLives = 4
+-- The initial number of lives.
+maxLifes :: Int
+maxLifes = 4
 
-updateCell :: RPSCell -> [RPSCell] -> IO RPSCell
-updateCell self friends = fight self `fmap` choice friends
+-- | In each step a cell selects one neighbor cell at random.
+--   Then here fight agains each other. If the our cell loses it loses one life, if it wins it gains one life point.
+--   If our cell doesn't have any lifes left it dies and gets the color of the enemy as well as `maxLifes` lifes.
+--   An empty cell as an enemy is always ignored (we don't change our state).
+--   An empty cell itself also selects one neighbor a random and then becomes this neighbor with `maxLifes` lifes.
+--   The rock paper scissors automaton uses a moor neighborhood.
+rockPaperScissorsRule :: Rule RPSCell
+rockPaperScissorsRule = Rule moorIndexDeltas (\self friends -> fight self `fmap` choice friends)
 
 fight :: RPSCell -> RPSCell -> RPSCell
 fight toUpdate other
-    | color toUpdate == White = RPSCell (color other) maxLives
+    | color toUpdate == White = RPSCell (color other) maxLifes
     | color other == White = toUpdate
     | color toUpdate == color other = toUpdate
     | better (color toUpdate) (color other) =
-        toUpdate { lives = min (lives toUpdate + 1) maxLives }
+        toUpdate { lives = min (lives toUpdate + 1) maxLifes }
     | otherwise = let updated = toUpdate { lives = lives toUpdate - 1 } in
-        if lives updated == 0 then RPSCell (color other) maxLives else updated
+        if lives updated == 0 then RPSCell (color other) maxLifes else updated
 
+-- | blue > green > red > blue
 better :: CellColor -> CellColor -> Bool
 better Red Blue = True
 better Green Red = True

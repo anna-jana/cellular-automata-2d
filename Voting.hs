@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-
+-- | Voting rules from *Cellular Automata Machines*
 module Voting where
 
 import CellularAutomata2D
