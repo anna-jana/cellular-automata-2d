@@ -3,12 +3,11 @@
 Code for 2D Cellular Automata (also stochastic ones) in Haskell.
 
 ### Install
-No cabal file.
-Install SDL, SDL-gfx and random.
+$ cabal install
+$ cabal repl
+> GameOfLife.main
 
 ### TODO
     * Tests
-    * better ui
-    * performance? e.g. only having two arrays (less memory allocation)
-    * cabal
+    * performance? e.g. only having two arrays (no memory allocation)
 
