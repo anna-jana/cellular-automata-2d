@@ -10,7 +10,7 @@ data Wire = Empty | Conductor | ElectronHead | ElectronTail deriving (Show, Eq, 
 main :: IO ()
 main = runCellularAutomata2D (initSpaceWithCells (50, 50) Empty [] :: Torus Wire) wireWorldRule
 
--- | A empty wire stays an emtpy wire forever.
+-- | A empty wire stays an empty wire forever.
 --   An electron head becomes on electron tail (the electron moves)
 --   An electron tail becomes a conductor (the electron moves)
 --   A Conductor becomes an electron head if there one or two electron heads in his neighborhood.

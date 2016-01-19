@@ -21,9 +21,9 @@ instance Cell Neuron where
 
     getSuccState = cycleEnum
 
--- | A firing cell becomes refractoring and a refractoring cell becomes ready.
+-- | A firing cell becomes refactoring and a refactoring cell becomes ready.
 --   The Cell stays ready until two neighbors of the cell are firing. Now cell is firing too.
---   Brians Brain uses a moor neighborhood.
+--   Brian's Brain uses a moor neighborhood.
 rule :: Neuron -> [Neuron] -> Neuron
 rule Ready friends
     | length (filter (== Firing) friends) == 2 = Firing

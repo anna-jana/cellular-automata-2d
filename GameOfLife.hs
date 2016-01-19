@@ -4,19 +4,19 @@ module GameOfLife where
 import CellularAutomata2D
 import GUI
 
--- | Run a simple glieder simulation.
+-- | Run a simple glider simulation.
 main :: IO ()
-main = runCellularAutomata2D glieder golRule
+main = runCellularAutomata2D glider golRule
 
-glieder :: Torus Int
-glieder = initIntSpaceWithCells (20, 20)
+glider :: Torus Int
+glider = initIntSpaceWithCells (20, 20)
     (zip [(0,2),(1,2),(2,2),(2,1),(1,0)] (repeat 1))
 
 -- | If a cell is alive its dies from overpopulation if its has more than tree neighbors
---   or from stravation if it has fewer than 2 neighbors.
+--   or from starvation if it has fewer than 2 neighbors.
 --   Otherwise the cell stays alive.
---   A new cell is born on an empty cell if is has excacly two neighbors.
---   Overwise the cell stays dead.
+--   A new cell is born on an empty cell if is has exactly two neighbors.
+--   Otherwise the cell stays dead.
 --   The game of life uses a moor neighborhood.
 golRule :: Rule Int
 golRule = makeTotalMoorRule [2,3] [3]

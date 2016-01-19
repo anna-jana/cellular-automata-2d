@@ -142,7 +142,7 @@ loop state = do
         SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> if running state then loop state else
                 update (getSpace state) (updateCellFn state) >>= \space' ->
                   loop state { getSpace = space' }
-        -- donw processing the events
+        -- done processing the events
         SDL.NoEvent -> do
             draw state
             -- if we are running then update the world

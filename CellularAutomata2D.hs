@@ -25,7 +25,7 @@ import Control.Applicative ((<$>))
 -------------------------------- General Concepts ------------------------------
 
 -- | A Rule is a function that returns a new cell value for an old state.
--- The new cell value is in the IO Monad so that you can implement nondeterminstic
+-- The new cell value is in the IO Monad so that you can implement nondeterministic
 -- (stochastic) automata. The neighborhood is specified by a list of offsets from the cell
 -- coordinate.
 data Rule a = Rule
@@ -34,7 +34,7 @@ data Rule a = Rule
     }
 
 ------------------------------- Torus shaped space -------------------------
--- | A Torus is basicly a plane with top and botton connected as well as left and right connected.
+-- | A Torus is basically a plane with top and bottom connected as well as left and right connected.
 newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
 
 -- | Get a cell at a coordinate in the space.
@@ -92,9 +92,9 @@ forSpace space fn =
 -------------------------------- Initializing Spaces ------------------------------
 
 -- | Initializes a space of a given shape using a list of possible cells.
--- Each cell is randomly choosen from the list.
--- You might want to duplicate elements in the list to ajust the frequencys
--- (probability to be choosen) of the cell values.
+-- Each cell is randomly chosen from the list.
+-- You might want to duplicate elements in the list to adjust the frequency's
+-- (probability to be chosen) of the cell values.
 randomSpace :: (Int, Int) -> [a] -> IO (Torus a)
 randomSpace shape cellStateDist = initSpaceIO shape $ const $ choice cellStateDist
 
@@ -110,7 +110,7 @@ initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 ----------------------------------- Helper for Rules ----------------------------------
 
 -- | The Moor neighborhood, witch is used in a lot cellular automata like
--- conways game of life.
+-- conway's game of life.
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], not (dx == 0 && dy == 0)]
 
@@ -129,8 +129,8 @@ makeTotalMoorRule stayAlive getBorn = Rule moorIndexDeltas
         _ -> error $ "binary total rule: expected 0 or 1 but got " ++
             show self)
 
--- | Selectes one random element from a list.
--- The list has to be finit.
+-- | Selects one random element from a list.
+-- The list has to be finite.
 -- O(n)
 choice :: [a] -> IO a
 choice xs = (xs !!) `fmap` randomRIO (0, length xs - 1)
