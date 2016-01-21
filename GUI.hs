@@ -8,7 +8,7 @@ module GUI (
 import Control.Monad (void, when)
 import Control.Concurrent (threadDelay)
 import Data.Bits
-import Data.Word (Word8)
+import Data.Word (Word8, Word16)
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Primitives as Draw
@@ -18,7 +18,7 @@ import CellularAutomata2D
 cycleEnum :: (Eq a, Bounded a, Enum a) => a -> a
 cycleEnum x = if x == maxBound then minBound else succ x
 
-class Cell c where
+class Eq c => Cell c where
     getColor :: c -> Color
     getSuccState :: c -> c
 
@@ -64,7 +64,7 @@ targetScreenSize = 500
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
-runCellularAutomata2D :: (Eq a, Cell a) => Torus a -> Rule a -> IO ()
+runCellularAutomata2D :: Cell a => Torus a -> Rule a -> IO ()
 runCellularAutomata2D space updateCell = do
     -- compute our window dimensions
     let (spaceHeight, spaceWidth) = getSpaceSize space
@@ -109,7 +109,7 @@ data SimulationState a = SimulationState
     }
 
 -- | the game loop
-loop :: (Eq a, Cell a) => SimulationState a -> IO ()
+loop :: Cell a => SimulationState a -> IO ()
 loop state = do
     start <- SDL.getTicks
     -- get an event and process it
@@ -157,17 +157,22 @@ loop state = do
                        , transX = moveX state + transX state -- apply moves
                        , transY = moveY state + transY state }
         _ -> loop state
-    where
-        -- change the cell state at a given pixel coordinate
-        insert state' x y = if not isOutside && cellIndex `notElem` inserted state'
-                   then loop state' { getSpace = setCell (getSpace state') cellIndex
-                                                      (iterate getSuccState (flip getCell cellIndex $ getSpace state') !! stateStep state),
-                                     inserted = cellIndex : inserted state' }
-                   else loop state'
-                where cellIndex = ((floor (fromIntegral (fromIntegral y - halfHeight state)/zoom state) + halfHeight state) `div` cellSize state - transY state,
-                                   (floor (fromIntegral (fromIntegral x - halfWidth state)/zoom state) + halfWidth state) `div` cellSize state - transX state)
-                      isOutside = fst cellIndex < 0 || fst cellIndex >= fst (getSpaceSize $ getSpace state) ||
-                                snd cellIndex < 0 || snd cellIndex >= snd (getSpaceSize $ getSpace state)
+
+-- | change the cell state at a given pixel coordinate
+insert :: Cell a => SimulationState a -> Word16 -> Word16 -> IO ()
+insert state x y
+    | not isOutside && cellIndex `notElem` inserted state =
+        loop state { getSpace = setCell
+                        (getSpace state)
+                        cellIndex
+                        (iterate getSuccState (flip getCell cellIndex $ getSpace state) !! stateStep state)
+                   , inserted = cellIndex : inserted state
+                   }
+    | otherwise = loop state
+    where cellIndex = ((floor (fromIntegral (fromIntegral y - halfHeight state)/zoom state) + halfHeight state) `div` cellSize state - transY state,
+                       (floor (fromIntegral (fromIntegral x - halfWidth state)/zoom state) + halfWidth state) `div` cellSize state - transX state)
+          isOutside = fst cellIndex < 0 || fst cellIndex >= fst (getSpaceSize $ getSpace state) ||
+                      snd cellIndex < 0 || snd cellIndex >= snd (getSpaceSize $ getSpace state)
 
 -- x -> col
 -- col = ((x - w/2)/zoom + w/2)/cellSize - transX
@@ -175,7 +180,7 @@ loop state = do
 -- x = zoom*((col + transX)*cellSize - w/2) + w/2
 
 -- | draw the state of the automata to the window
-draw :: (Eq a, Cell a) => SimulationState a -> IO ()
+draw :: Cell a => SimulationState a -> IO ()
 draw state = do
     -- clear the window
     SDL.fillRect (getScreen state) Nothing (SDL.Pixel 0)
