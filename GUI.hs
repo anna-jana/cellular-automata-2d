@@ -64,8 +64,8 @@ targetScreenSize = 500
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
-runCellularAutomata2D :: Cell a => Torus a -> Rule a -> IO ()
-runCellularAutomata2D space updateCell = do
+runCellularAutomata2D :: Cell a => Rule a -> Torus a -> IO ()
+runCellularAutomata2D rule space = do
     -- compute our window dimensions
     let (spaceHeight, spaceWidth) = getSpaceSize space
     let cellSize' = if spaceHeight > spaceWidth
@@ -80,7 +80,7 @@ runCellularAutomata2D space updateCell = do
     loop SimulationState
         { getScreen = screen
         , cellSize = cellSize'
-        , updateCellFn = updateCell
+        , getRule = rule
         , getSpace = space
         , stateStep = 1
         , running = False
@@ -95,7 +95,7 @@ runCellularAutomata2D space updateCell = do
 data SimulationState a = SimulationState
     { getScreen :: SDL.Surface
     , cellSize :: Int
-    , updateCellFn :: Rule a
+    , getRule :: Rule a
     , getSpace :: Torus a
     , stateStep :: Int
     , running :: Bool
@@ -140,14 +140,14 @@ loop state = do
         SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, stateStep = 1 }
         -- advance for one generation (only if we aren't running)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> if running state then loop state else
-                update (getSpace state) (updateCellFn state) >>= \space' ->
+                update (getRule state) (getSpace state) >>= \space' ->
                   loop state { getSpace = space' }
         -- done processing the events
         SDL.NoEvent -> do
             draw state
             -- if we are running then update the world
             newSpace <- if running state
-                then update (getSpace state) (updateCellFn state)
+                then update (getRule state) (getSpace state)
                 else return (getSpace state)
             -- delay to get the right FPS
             stop <- SDL.getTicks

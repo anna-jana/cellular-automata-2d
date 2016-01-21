@@ -9,9 +9,7 @@ data Wood = Tree | Empty | Fire deriving (Show, Eq, Bounded, Enum)
 
 -- | run the simulation
 main :: IO ()
-main = do
-    space <- randomSpace (150, 150) [Empty, Tree] :: IO (Torus Wood)
-    runCellularAutomata2D space (Rule moorIndexDeltas updateCell)
+main = randomSpace (150, 150) [Empty, Tree] >>= runCellularAutomata2D forestRule
 
 -- | Probability of a fire in a tree if one the neighbor tree is burning
 newFireProb :: Float
@@ -26,18 +24,20 @@ newTreeProb = 1 - 0.96
 --   If a tree as at least one burning neighbor tree it starts to burn itself witch probability `newFireProb`.
 --   Otherwise everything stays the same.
 --   The forest automaton uses the moor neighborhood.
-updateCell :: Wood -> [Wood] -> IO Wood
-updateCell Fire _ = return Empty
-updateCell Tree friends = do
-    newFire <- randomRIO (0,1)
-    return $ if newFireProb >= newFire || Fire `elem` friends
-        then Fire
-        else Tree
-updateCell Empty _ = do
-    newTree <- randomRIO (0, 1)
-    return $ if newTreeProb >= newTree
-        then Tree
-        else Empty
+forestRule :: Rule Wood
+forestRule = Rule moorIndexDeltas updateCell
+    where
+        updateCell Fire _ = return Empty
+        updateCell Tree friends = do
+            newFire <- randomRIO (0,1)
+            return $ if newFireProb >= newFire || Fire `elem` friends
+                then Fire
+                else Tree
+        updateCell Empty _ = do
+            newTree <- randomRIO (0, 1)
+            return $ if newTreeProb >= newTree
+                then Tree
+                else Empty
 
 instance Cell Wood where
     getColor Fire = red
@@ -45,5 +45,3 @@ instance Cell Wood where
     getColor Empty = brown
 
     getSuccState = cycleEnum
-
-

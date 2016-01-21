@@ -1,16 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 -- | Voting rules from *Cellular Automata Machines*
-module Voting where
+module Voting (main, banks, anneal, majority) where
 
 import CellularAutomata2D
 import GUI
 
 main :: IO ()
-main = do
-    -- space <- randomSpace size [True, False]
-    -- runCellularAutomata2D space [True, False] (\c -> if c then white else black) anneal
-    space <- randomSpace size [0,1]
-    runCellularAutomata2D space  banks
+main =
+    -- randomSpace size [True, False] >>= runCellularAutomata2D anneal
+    randomSpace size [0,1] >>= runCellularAutomata2D banks
 
 banks :: Rule Int
 banks = Rule neumannIndexDeltas $ \self neighbors ->

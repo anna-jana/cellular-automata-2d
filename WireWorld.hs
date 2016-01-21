@@ -1,5 +1,5 @@
 -- | A cellular automaton witch simulates logic circuits
-module WireWorld where
+module WireWorld (Wire, main, wireWorldRule) where
 
 import CellularAutomata2D
 import GUI
@@ -8,7 +8,7 @@ import GUI
 data Wire = Empty | Conductor | ElectronHead | ElectronTail deriving (Show, Eq, Enum, Bounded)
 
 main :: IO ()
-main = runCellularAutomata2D (initSpaceWithCells (50, 50) Empty [] :: Torus Wire) wireWorldRule
+main = runCellularAutomata2D wireWorldRule (initSpaceWithCells (50, 50) Empty [])
 
 -- | A empty wire stays an empty wire forever.
 --   An electron head becomes on electron tail (the electron moves)

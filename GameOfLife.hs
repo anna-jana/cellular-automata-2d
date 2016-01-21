@@ -6,7 +6,7 @@ import GUI
 
 -- | Run a simple glider simulation.
 main :: IO ()
-main = runCellularAutomata2D glider golRule
+main = runCellularAutomata2D golRule glider
 
 glider :: Torus Int
 glider = initIntSpaceWithCells (20, 20)

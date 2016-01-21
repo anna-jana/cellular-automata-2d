@@ -12,7 +12,7 @@ runInTerminal :: (a -> Char) -> Torus a -> Rule a -> IO ()
 runInTerminal char space rule = do
     printSpace char space
     getLine
-    space' <- update space rule
+    space' <- update rule space
     runInTerminal char space' rule
 
 printSpace :: (a -> Char) -> Torus a -> IO ()

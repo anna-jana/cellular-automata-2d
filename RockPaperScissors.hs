@@ -1,15 +1,13 @@
 -- | A cellular automaton witch simulates a lot of rock paper scissor games or
 --   something witch is similar to oscillating chemical reactions.
-module RockPaperScissors where
+module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, main) where
 
 import CellularAutomata2D
 import GUI
 
 -- Simulate the rock paper scissors automaton
 main :: IO ()
-main = do
-    let space = initSpaceWithCells (50, 50) (RPSCell White maxLives) [] :: Torus RPSCell
-    runCellularAutomata2D space rockPaperScissorsRule
+main = runCellularAutomata2D rockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
 
 -- Every cell can have a color of be white (empty)
 data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum)

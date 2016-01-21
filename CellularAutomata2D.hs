@@ -69,8 +69,8 @@ initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
     [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
 
 -- | Updates a given space by one generation using a given rule.
-update :: Torus a -> Rule a -> IO (Torus a)
-update space rule = initSpaceIO (getSpaceSize space) updateCell
+update :: Rule a -> Torus a -> IO (Torus a)
+update rule space = initSpaceIO (getSpaceSize space) updateCell
   where
       updateCell (row, col) = ruleFunction rule self friends
         where
