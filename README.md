@@ -3,11 +3,13 @@
 Code for 2D Cellular Automata (also stochastic ones) in Haskell.
 
 ### Install
+```
+$ git clone https://github.com/orion-42/cellular-automata-2d
+$ cd cellular-automata-2d
 $ cabal install
 $ cabal repl
-> GameOfLife.main
+> GameOfLife.main -- a glieder in the game of life
+```
 
 ### TODO
-    * Tests
-    * performance? e.g. only having two arrays (no memory allocation)
-
+    * performance? e.g. only having two arrays (no memory allocation a each step)
