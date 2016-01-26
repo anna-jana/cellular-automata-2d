@@ -3,7 +3,7 @@ module CellularAutomata2D (
     Rule(..),
     -- * Torus shaped space
     Torus(..),
-    getCell, setCell, setCells,
+    getCell, setCell, setCells, remapIndex,
     getSpaceSize,
     initSpace, initSpaceIO,
     update,
@@ -19,6 +19,7 @@ module CellularAutomata2D (
 
 import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, (!), Array, (//))
+import Control.Arrow
 import Control.Monad (forM_)
 import Control.Applicative ((<$>))
 
@@ -35,20 +36,23 @@ data Rule a = Rule
 
 ------------------------------- Torus shaped space -------------------------
 -- | A Torus is basically a plane with top and bottom connected as well as left and right connected.
-newtype Torus a = Torus (Array (Int, Int) a) deriving (Show, Eq)
+newtype Torus a = Torus { getCells :: Array (Int, Int) a } deriving (Show, Eq)
 
 -- | Get a cell at a coordinate in the space.
 getCell :: Torus a -> (Int, Int) -> a
-getCell (Torus a) (row, col) = a ! (row `mod` h, col `mod` w)
-    where (h, w) = getSpaceSize (Torus a)
+getCell space index = getCells space ! remapIndex space index
 
 -- | Set a cell at a coordinate in the space to a new value.
 setCell :: Torus a -> (Int, Int) -> a -> Torus a
-setCell (Torus space) index cell = Torus $ space // [(index, cell)]
+setCell space index newState = Torus $ getCells space // [(remapIndex space index, newState)]
 
 -- | Set a bunch of cells specified by there coordinate to new values.
 setCells :: Torus a -> [((Int, Int), a)] -> Torus a
-setCells (Torus space) cells = Torus $ space // cells
+setCells space cells = Torus $ getCells space // map (first (remapIndex space)) cells
+
+-- | wrap the index around the edges of the space
+remapIndex :: Torus a -> (Int, Int) -> (Int, Int)
+remapIndex space (row, col) = (row `mod` h, col `mod` w) where (h, w) = getSpaceSize space
 
 -- | Get the dimensions of the space rows * columns
 getSpaceSize :: Torus a -> (Int, Int)

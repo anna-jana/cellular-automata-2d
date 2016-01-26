@@ -19,6 +19,21 @@ library
   exposed-modules:     Voting, Brain, GameOfLife, GUI, CellularAutomata2D, Term, RockPaperScissors, WireWorld, Forest
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.6 && <4.7, SDL >=0.6 && <0.7, SDL-gfx >=0.6 && <0.7, random >=1.0 && <1.1, array >=0.4 && <0.5
+  build-depends:       base >=4.6 && <4.7,
+                       random >=1.0 && <1.1,
+                       array >=0.4 && <0.5,
+                       SDL >=0.6 && <0.7, SDL-gfx >=0.6 && <0.7
   -- hs-source-dirs:
   default-language:    Haskell2010
+
+test-suite tests
+   ghc-options:
+   -- default-extensions:
+   type: exitcode-stdio-1.0
+   main-is: Test.hs
+   build-depends:      base, cellular-automata-2d,
+                       HUnit, QuickCheck >= 2.8,
+                       random >=1.0 && <1.1,
+                       array >=0.4 && <0.5,
+                       SDL >=0.6 && <0.7, SDL-gfx >=0.6 && <0.7
+   default-language:    Haskell2010
