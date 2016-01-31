@@ -9,15 +9,25 @@ import Test.QuickCheck.Modifiers
 
 import CellularAutomata2D
 import Files
+import qualified GameOfLife
 
 main :: IO ()
 main = do
     -- unit tests
+    testSpace <- update GameOfLife.golRule (fromMatrix [[0, 0, 1, 0],
+                                                        [1, 0, 1, 0],
+                                                        [0, 1, 1, 0],
+                                                        [0, 0, 0, 0]])
+
     runTestTT $ TestList
         [TestCase $ assertEqual "moor neighborhood" (sort moorIndexDeltas)
                                                     (sort [(-1,-1), (0,-1), (0,1), (1,0), (1,1), (0,1), (-1,1), (1,0)])
         ,TestCase $ assertEqual "von neumann" (sort neumannIndexDeltas)
                                               (sort [(0,1),(0,-1),(1,0),(-1,0)])
+        ,TestCase $ assertEqual "game of life" testSpace (fromMatrix [[0, 1, 0, 0],
+                                                                      [0, 0, 1, 1],
+                                                                      [0, 1, 1, 0],
+                                                                      [0, 0, 0, 0]])
         ]
     -- property tests
     -- get and set

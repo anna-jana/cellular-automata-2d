@@ -10,7 +10,7 @@ module CellularAutomata2D (
     -- * Space Utils
     forSpace,
     -- * Initializing Spaces
-    randomSpace, initSpaceWithCells, initIntSpaceWithCells,
+    randomSpace, initSpaceWithCells, initIntSpaceWithCells, fromMatrix,
     -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
@@ -110,6 +110,11 @@ initSpaceWithCells shape defaultValue = setCells (initSpace shape (const default
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
 initIntSpaceWithCells :: (Int, Int) -> [((Int, Int), Int)] -> Torus Int
 initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
+
+fromMatrix :: [[a]] -> Torus a
+fromMatrix mtx = initSpaceWithCells (length mtx, length $ head mtx) undefined cellsOfMatrix
+    where cellsOfMatrix = concat $ zipWith makeRow [0..] mtx
+          makeRow rowIndex = zipWith (\colIndex cell -> ((rowIndex, colIndex), cell)) [0..]
 
 ----------------------------------- Helper for Rules ----------------------------------
 
