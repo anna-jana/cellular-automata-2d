@@ -8,6 +8,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Modifiers
 
 import CellularAutomata2D
+import Files
 
 main :: IO ()
 main = do
@@ -32,6 +33,11 @@ main = do
                                     map (getCell space' . fst) cells == map snd cells)
     -- initSpace and getSpaceSize
     quickCheck (\size -> size == getSpaceSize (initSpace size (const (1 :: Int))))
+
+    space <- randomSpace (10, 10) [0,1]
+    saveToFile space "test.space"
+    space' <- loadFromFile "test.space"
+    putStrLn $ if space == space' then "ok, io works" else "failed to reload file"
 
 
 instance Arbitrary a => Arbitrary (Torus a) where

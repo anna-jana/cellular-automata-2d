@@ -36,7 +36,7 @@ data Rule a = Rule
 
 ------------------------------- Torus shaped space -------------------------
 -- | A Torus is basically a plane with top and bottom connected as well as left and right connected.
-newtype Torus a = Torus { getCells :: Array (Int, Int) a } deriving (Show, Eq)
+newtype Torus a = Torus { getCells :: Array (Int, Int) a } deriving (Show, Read, Eq)
 
 -- | Get a cell at a coordinate in the space.
 getCell :: Torus a -> (Int, Int) -> a
