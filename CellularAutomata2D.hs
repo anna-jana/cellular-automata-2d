@@ -111,6 +111,7 @@ initSpaceWithCells shape defaultValue = setCells (initSpace shape (const default
 initIntSpaceWithCells :: (Int, Int) -> [((Int, Int), Int)] -> Torus Int
 initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
 
+-- | creates a new space from a grid of cells represented as a list of lists
 fromMatrix :: [[a]] -> Torus a
 fromMatrix mtx = initSpaceWithCells (length mtx, length $ head mtx) undefined cellsOfMatrix
     where cellsOfMatrix = concat $ zipWith makeRow [0..] mtx

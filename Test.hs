@@ -44,10 +44,11 @@ main = do
     -- initSpace and getSpaceSize
     quickCheck (\size -> size == getSpaceSize (initSpace size (const (1 :: Int))))
 
+    --
     space <- randomSpace (10, 10) [0,1]
     saveToFile space "test.space"
     space' <- loadFromFile "test.space"
-    putStrLn $ if space == space' then "ok, io works" else "failed to reload file"
+    if space == space' then putStrLn "ok, io works" else error "failed to reload file"
 
 
 instance Arbitrary a => Arbitrary (Torus a) where
@@ -56,4 +57,3 @@ instance Arbitrary a => Arbitrary (Torus a) where
         m <- getSmall <$> arbitrary
         xs <- vector (n*m)
         return $ Torus $ listArray ((0, 0), (n - 1, m - 1)) xs
-
