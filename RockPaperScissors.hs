@@ -9,20 +9,20 @@ import GUI
 main :: IO ()
 main = runCellularAutomata2D rockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
 
--- Every cell can have a color of be white (empty)
+-- | Every cell can have a color of be white (empty)
 data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum)
--- A cell has also a number of lives.
+-- | A cell has also a number of lives.
 data RPSCell = RPSCell { color :: CellColor, lives :: Int } deriving (Show, Eq)
 
--- The initial number of lives.
+-- | The initial number of lives.
 maxLives :: Int
 maxLives = 4
 
 -- | In each step a cell selects one neighbor cell at random.
---   Then here fight against each other. If the our cell loses it loses one life, if it wins it gains one life point.
---   If our cell doesn't have any lives left it dies and gets the color of the enemy as well as `maxLives` lives.
+--   Then here fight against each other. If our cell loses, it loses one life point. If it wins it gains one life point.
+--   If our cell doesn't have any lives left, it dies and gets the color of the enemy as well as `maxLives` lives.
 --   An empty cell as an enemy is always ignored (we don't change our state).
---   An empty cell itself also selects one neighbor a random and then becomes this neighbor with `maxLives` lives.
+--   An empty cell itself, also selects one neighbor a random and then becomes this neighbor with `maxLives` lives.
 --   The rock paper scissors automaton uses a moor neighborhood.
 rockPaperScissorsRule :: Rule RPSCell
 rockPaperScissorsRule = Rule moorIndexDeltas (\self friends -> fight self `fmap` choice friends)
