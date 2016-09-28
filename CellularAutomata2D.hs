@@ -10,11 +10,11 @@ module CellularAutomata2D (
     -- * Space Utils
     forSpace,
     -- * Initializing Spaces
-    randomSpace, initSpaceWithCells, initIntSpaceWithCells, fromMatrix,
+    randomSpace, initSpaceWithCells, initBoolSpaceWithCells, fromMatrix,
     -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
-    choice,
+    choice, count,
     makeReversibleRule) where
 
 import System.Random (randomRIO, Random)
@@ -108,8 +108,8 @@ initSpaceWithCells :: (Int, Int) -> a -> [((Int, Int), a)] -> Torus a
 initSpaceWithCells shape defaultValue = setCells (initSpace shape (const defaultValue))
 
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
-initIntSpaceWithCells :: (Int, Int) -> [((Int, Int), Int)] -> Torus Int
-initIntSpaceWithCells = flip initSpaceWithCells (0 :: Int)
+initBoolSpaceWithCells :: (Int, Int) -> [((Int, Int), Bool)] -> Torus Bool
+initBoolSpaceWithCells = flip initSpaceWithCells False
 
 -- | creates a new space from a grid of cells represented as a list of lists
 fromMatrix :: [[a]] -> Torus a
@@ -131,13 +131,13 @@ neumannIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], (dx == 0) /= (dy 
 -- | Creates a life like automata from a list of neighborhood sizes in witch
 -- a new cell is born and a list of neighborhood sizes where the cell stays
 -- alive. e.g. the game of life is makeTotalMoorRule [2,3] [3]
-makeTotalMoorRule :: [Int] -> [Int] -> Rule Int
-makeTotalMoorRule stayAlive getBorn = Rule moorIndexDeltas
-    (\self friends -> return $ case self of
-        0 -> if sum friends `elem` getBorn then 1 else 0
-        1 -> if sum friends `elem` stayAlive then 1 else 0
-        _ -> error $ "binary total rule: expected 0 or 1 but got " ++
-            show self)
+makeTotalMoorRule :: [Int] -> [Int] -> Rule Bool
+makeTotalMoorRule getBorn stayAlive = Rule moorIndexDeltas
+    (\self neighborhood -> return $ count neighborhood `elem` (if self then stayAlive else getBorn))
+
+-- | Count the number of True (on/alive cells) in the given neighborhood
+count :: [Bool] -> Int
+count = length . filter id
 
 -- | Selects one random element from a list.
 -- The list has to be finite.

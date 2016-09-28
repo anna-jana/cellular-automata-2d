@@ -8,15 +8,15 @@ import GUI
 main :: IO ()
 main =
     -- randomSpace size [True, False] >>= runCellularAutomata2D anneal
-    randomSpace size [0,1] >>= runCellularAutomata2D banks
+    randomSpace size [True, False] >>= runCellularAutomata2D banks
 
-banks :: Rule Int
+banks :: Rule Bool
 banks = Rule neumannIndexDeltas $ \self neighbors ->
-    return $ case sum neighbors of
+    return $ case count neighbors of
         0 -> self
         1 -> self
-        2 -> if neighbors !! 1 == neighbors !! 2 then self else 0
-        _ -> 1
+        2 -> neighbors !! 1 == neighbors !! 2 && self
+        _ -> True
 
 anneal :: Rule Bool
 anneal = Rule moorIndexDeltas $ \self neighbors ->
@@ -33,8 +33,3 @@ circle = initSpace size (\(row, col) -> 20 >=
 
 size :: (Int, Int)
 size = (50, 50)
-
-instance Cell Int where
-    getColor = ([white, black] !!)
-    getSuccState 0 = 1
-    getSuccState 1 = 0
