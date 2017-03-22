@@ -16,7 +16,7 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Voting, Brain, GameOfLife, GUI, CellularAutomata2D, Term, RockPaperScissors, WireWorld, Forest, Files, Cave
+  exposed-modules:     Voting, Brain, GameOfLife, GUI, CellularAutomata2D, Term, RockPaperScissors, WireWorld, Forest, Files, Cave, Seeds
   -- other-modules:
   -- other-extensions:
   build-depends: SDL ==0.6.5.1,

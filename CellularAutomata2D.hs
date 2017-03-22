@@ -108,8 +108,8 @@ initSpaceWithCells :: (Int, Int) -> a -> [((Int, Int), a)] -> Torus a
 initSpaceWithCells shape defaultValue = setCells (initSpace shape (const defaultValue))
 
 -- | Specialized version of initSpaceWithDefault for int spaces with 0 as the background.
-initBoolSpaceWithCells :: (Int, Int) -> [((Int, Int), Bool)] -> Torus Bool
-initBoolSpaceWithCells = flip initSpaceWithCells False
+initBoolSpaceWithCells :: (Int, Int) -> [(Int, Int)] -> Torus Bool
+initBoolSpaceWithCells shape cells = initSpaceWithCells shape False (zip cells (repeat True))
 
 -- | creates a new space from a grid of cells represented as a list of lists
 fromMatrix :: [[a]] -> Torus a

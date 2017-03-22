@@ -9,8 +9,7 @@ main :: IO ()
 main = runCellularAutomata2D golRule glider
 
 glider :: Torus Bool
-glider = initBoolSpaceWithCells (20, 20)
-    (zip [(0,2),(1,2),(2,2),(2,1),(1,0)] (repeat True))
+glider = initBoolSpaceWithCells (20, 20) [(0,2),(1,2),(2,2),(2,1),(1,0)]
 
 -- | If a cell is alive its dies from overpopulation if its has more than tree neighbors
 --   or from starvation if it has fewer than 2 neighbors.
