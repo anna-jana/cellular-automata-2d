@@ -135,7 +135,7 @@ loop state = do
         SDL.KeyUp (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = 0 }
         -- zoom in/out
         SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = zoom state - 0.25 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = (zoom state - 0.25) `max` 0 }
         -- reset our view (no zoom or translation)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, stateStep = 1 }
         -- advance for one generation (only if we aren't running)
