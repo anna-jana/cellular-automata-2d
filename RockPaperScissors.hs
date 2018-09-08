@@ -1,18 +1,24 @@
 -- | A cellular automaton witch simulates a lot of rock paper scissor games or
 --   something witch is similar to oscillating chemical reactions.
-module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, main) where
+module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, main, maxLives) where
 
 import CellularAutomata2D
 import GUI
+
+import Data.Ix
 
 -- Simulate the rock paper scissors automaton
 main :: IO ()
 main = runCellularAutomata2D rockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
 
 -- | Every cell can have a color of be white (empty)
-data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum)
+data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum, Ord, Ix)
 -- | A cell has also a number of lives.
-data RPSCell = RPSCell { color :: CellColor, lives :: Int } deriving (Show, Eq)
+data RPSCell = RPSCell { color :: CellColor, lives :: Int } deriving (Show, Eq, Ord, Ix)
+
+instance Bounded RPSCell where
+    minBound = RPSCell minBound 0
+    maxBound = RPSCell maxBound maxLives
 
 -- | The initial number of lives.
 maxLives :: Int

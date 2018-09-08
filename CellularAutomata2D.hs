@@ -38,6 +38,9 @@ data Rule a = Rule
 -- | A Torus is basically a plane with top and bottom connected as well as left and right connected.
 newtype Torus a = Torus { getCells :: Array (Int, Int) a } deriving (Show, Read, Eq)
 
+instance Functor Torus where
+    fmap f = Torus . fmap f . getCells
+
 -- | Get a cell at a coordinate in the space.
 getCell :: Torus a -> (Int, Int) -> a
 getCell space index = getCells space ! remapIndex space index

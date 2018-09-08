@@ -1,6 +1,9 @@
 *.hi
 *.o
 *.swp
+*.dat
+*.csv
+*.pyc
 GameOfLife
 Forest
 Brain
