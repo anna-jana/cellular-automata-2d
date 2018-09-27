@@ -9,7 +9,7 @@ data Wood = Tree | Empty | Fire deriving (Show, Eq, Bounded, Enum)
 
 -- | run the simulation
 main :: IO ()
-main = randomSpace (150, 150) [Empty, Tree] >>= runCellularAutomata2D forestRule
+main = randomSpace (150, 150) [Empty, Tree] >>= runCellularAutomata2D forestRule >> return ()
 
 -- | Probability of a fire in a tree if one the neighbor tree is burning
 newFireProb :: Float

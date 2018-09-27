@@ -6,7 +6,7 @@ import GUI
 
 -- | Run a simple glider simulation.
 main :: IO ()
-main = runCellularAutomata2D golRule glider
+main = runCellularAutomata2D golRule glider >> return ()
 
 glider :: Torus Bool
 glider = initBoolSpaceWithCells (20, 20) [(0,2),(1,2),(2,2),(2,1),(1,0)]

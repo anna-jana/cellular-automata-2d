@@ -64,7 +64,7 @@ targetScreenSize = 500
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
 -- He can also edit the space by clicking into a cell witch goes to the next state.
-runCellularAutomata2D :: Cell a => Rule a -> Torus a -> IO ()
+runCellularAutomata2D :: Cell a => Rule a -> Torus a -> IO (Torus a)
 runCellularAutomata2D rule space = do
     -- compute our window dimensions
     let (spaceHeight, spaceWidth) = getSpaceSize space
@@ -109,13 +109,13 @@ data SimulationState a = SimulationState
     }
 
 -- | the game loop
-loop :: Cell a => SimulationState a -> IO ()
+loop :: Cell a => SimulationState a -> IO (Torus a)
 loop state = do
     start <- SDL.getTicks
     -- get an event and process it
     event <- SDL.pollEvent
     case event of
-        SDL.Quit -> SDL.quit
+        SDL.Quit -> SDL.quit >> return (getSpace state)
         SDL.MouseButtonUp _ _ SDL.ButtonLeft -> loop state { inserting = False, inserted = [] } -- stop changing cell states
         SDL.MouseMotion x y _ _
             | inserting state -> insert state x y -- inserting new cells
@@ -159,7 +159,7 @@ loop state = do
         _ -> loop state
 
 -- | change the cell state at a given pixel coordinate
-insert :: Cell a => SimulationState a -> Word16 -> Word16 -> IO ()
+insert :: Cell a => SimulationState a -> Word16 -> Word16 -> IO (Torus a)
 insert state x y
     | not isOutside && cellIndex `notElem` inserted state =
         loop state { getSpace = setCell

@@ -9,6 +9,7 @@ main :: IO ()
 main =
     -- randomSpace size [True, False] >>= runCellularAutomata2D anneal
     randomSpace size [True, False] >>= runCellularAutomata2D banks
+    >> return ()
 
 banks :: Rule Bool
 banks = Rule neumannIndexDeltas $ \self neighbors ->

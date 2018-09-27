@@ -8,7 +8,7 @@ import GUI
 data Wire = Empty | Conductor | ElectronHead | ElectronTail deriving (Show, Eq, Enum, Bounded)
 
 main :: IO ()
-main = runCellularAutomata2D wireWorldRule (initSpaceWithCells (50, 50) Empty [])
+main = runCellularAutomata2D wireWorldRule (initSpaceWithCells (50, 50) Empty []) >> return ()
 
 -- | A empty wire stays an empty wire forever.
 --   An electron head becomes on electron tail (the electron moves)

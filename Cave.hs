@@ -5,7 +5,7 @@ import CellularAutomata2D
 import GUI
 
 main :: IO ()
-main = randomSpace (100, 100) [True, False] >>= runCellularAutomata2D caveRule
+main = randomSpace (100, 100) [True, False] >>= runCellularAutomata2D caveRule >> return ()
 
 caveRule :: Rule Bool
 caveRule = makeTotalMoorRule [6..8] [3..8]

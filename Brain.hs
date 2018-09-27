@@ -6,7 +6,7 @@ import GUI
 
 -- | simulate Brians Brain
 main :: IO ()
-main = randomSpace (50, 50) [Ready, Firing, Refractory] >>= runCellularAutomata2D brainRule
+main = randomSpace (50, 50) [Ready, Firing, Refractory] >>= runCellularAutomata2D brainRule >> return ()
 
 -- | the state of a neuron
 data Neuron = Ready | Firing | Refractory deriving (Show, Eq, Bounded, Enum)
