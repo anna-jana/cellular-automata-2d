@@ -12,4 +12,4 @@ $ cabal repl
 ```
 
 ### TODO
-* performance? e.g. only having two arrays (no memory allocation a each step)
+* performance? e.g. only having two arrays (no memory allocation at each step)

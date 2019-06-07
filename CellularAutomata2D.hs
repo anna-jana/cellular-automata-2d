@@ -14,7 +14,7 @@ module CellularAutomata2D (
     -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
-    choice, count,
+    choice, count, chooseWithPropability,
     makeReversibleRule) where
 
 import System.Random (randomRIO, Random)
@@ -147,6 +147,10 @@ count = length . filter id
 -- O(n)
 choice :: [a] -> IO a
 choice xs = (xs !!) `fmap` randomRIO (0, length xs - 1)
+
+-- | Return the first element a with propability p otherwise return b
+chooseWithPropability :: Double -> a -> a -> IO a
+chooseWithPropability p a b = (\x -> if x < p then a else b) <$> randomRIO (0, 1)
 
 -- | Creates a reversible rule from a non reversible rule by remembering the state and always
 -- xoring the new state with the old one.
