@@ -16,3 +16,4 @@ cabal.sandbox.config
 dist
 .cabal-sandbox
 *.space
+dist-newstyle

@@ -1,4 +1,4 @@
--- module Analysis where
+module Analysis where
 
 import Data.Array
 

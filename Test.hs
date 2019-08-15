@@ -42,21 +42,26 @@ tests = [
         ]
     ]
 
+intToBool :: Int -> Bool
+intToBool 0 = False
+intToBool _ = True
+
 -- | checks if the update in the game of life with a glieder is correct.
 testGOLStep :: Assertion
 testGOLStep = do
     resultSpace' <- update GameOfLife.golRule testSpace
     resultSpace' @?= resultSpace
-    where testSpace = fromMatrix [[0, 0, 1, 0, 0],
-                                  [1, 0, 1, 0, 0],
-                                  [0, 1, 1, 0, 0],
-                                  [0, 0, 0, 0, 0],
-                                  [0, 0, 0, 0, 0]]
-          resultSpace = fromMatrix [[0, 1, 0, 0, 0],
-                                    [0, 0, 1, 1, 0],
-                                    [0, 1, 1, 0, 0],
-                                    [0, 0, 0, 0, 0],
-                                    [0, 0, 0, 0, 0]]
+    where testSpace = convert [[0, 0, 1, 0, 0],
+                               [1, 0, 1, 0, 0],
+                               [0, 1, 1, 0, 0],
+                               [0, 0, 0, 0, 0],
+                               [0, 0, 0, 0, 0]]
+          resultSpace = convert [[0, 1, 0, 0, 0],
+                                 [0, 0, 1, 1, 0],
+                                 [0, 1, 1, 0, 0],
+                                 [0, 0, 0, 0, 0],
+                                 [0, 0, 0, 0, 0]]
+          convert = fromMatrix . map (map intToBool)
 
 -- | check if the von neumann neighborhood is correct
 testNeumannNeighborhood :: Assertion
