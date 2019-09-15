@@ -90,6 +90,7 @@ runCellularAutomata2D rule space = do
         , inserted = []
         , inserting = False
         , moveX = 0, moveY = 0
+        , redraw = True
         }
 
 data SimulationState a = SimulationState
@@ -106,6 +107,7 @@ data SimulationState a = SimulationState
     , inserted :: [(Int, Int)]
     , inserting :: Bool
     , moveX :: Int, moveY :: Int
+    , redraw :: Bool
     }
 
 -- | the game loop
@@ -118,33 +120,33 @@ loop state = do
         SDL.Quit -> SDL.quit >> return (getSpace state)
         SDL.MouseButtonUp _ _ SDL.ButtonLeft -> loop state { inserting = False, inserted = [] } -- stop changing cell states
         SDL.MouseMotion x y _ _
-            | inserting state -> insert state x y -- inserting new cells
+            | inserting state -> insert state { redraw = True } x y -- inserting new cells
             | otherwise -> loop state
-        SDL.MouseButtonDown x y SDL.ButtonLeft -> insert state { inserting = True } x y -- start changing cells
+        SDL.MouseButtonDown x y SDL.ButtonLeft -> insert state { inserting = True, redraw = True } x y -- start changing cells
         SDL.MouseButtonDown _ _ SDL.ButtonRight -> loop state { stateStep = stateStep state + 1 } -- TODO dec.?
         -- toogle running (update of the world)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_SPACE _ _) -> loop state { running = not (running state) }
         -- move the users view on the world
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = -1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 1 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = -1 }
-        SDL.KeyUp (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 0 }
-        SDL.KeyUp (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = 0 }
-        SDL.KeyUp (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 0 }
-        SDL.KeyUp (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = 0 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 1, redraw = True }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = -1, redraw = True }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 1, redraw = True }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = -1, redraw = True }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_LEFT _ _) -> loop state { moveX = 0, redraw = True }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_RIGHT _ _) -> loop state { moveX = 0, redraw = True }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_UP _ _) -> loop state { moveY = 0, redraw = True }
+        SDL.KeyUp (SDL.Keysym SDL.SDLK_DOWN _ _) -> loop state { moveY = 0, redraw = True }
         -- zoom in/out
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25 }
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = (zoom state - 0.25) `max` 0 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_PLUS _ _) -> loop state { zoom = zoom state + 0.25, redraw = True }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_MINUS _ _) -> loop state { zoom = (zoom state - 0.25) `max` 0, redraw = True }
         -- reset our view (no zoom or translation)
-        SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, stateStep = 1 }
+        SDL.KeyDown (SDL.Keysym SDL.SDLK_h _ _) -> loop state { transX = 0, transY = 0, zoom = 1, stateStep = 1, redraw = True }
         -- advance for one generation (only if we aren't running)
         SDL.KeyDown (SDL.Keysym SDL.SDLK_RETURN _ _) -> if running state then loop state else
                 update (getRule state) (getSpace state) >>= \space' ->
-                  loop state { getSpace = space' }
+                  loop state { getSpace = space', redraw = True }
         -- done processing the events
         SDL.NoEvent -> do
-            draw state
+            when (redraw state) $ draw state
             -- if we are running then update the world
             newSpace <- if running state
                 then update (getRule state) (getSpace state)
@@ -155,7 +157,8 @@ loop state = do
             when (toDelay > 0) $ threadDelay $ round $ 10^(5::Int) * toDelay
             loop state { getSpace = newSpace
                        , transX = moveX state + transX state -- apply moves
-                       , transY = moveY state + transY state }
+                       , transY = moveY state + transY state
+                       , redraw = running state }
         _ -> loop state
 
 -- | change the cell state at a given pixel coordinate
