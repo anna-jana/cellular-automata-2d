@@ -1,6 +1,6 @@
 -- | A cellular automaton witch simulates a lot of rock paper scissor games or
 --   something witch is similar to oscillating chemical reactions.
-module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, main, maxLives) where
+module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, detRockPaperScissorsRule, main, maxLives) where
 
 import CellularAutomata2D
 import GUI
@@ -9,7 +9,7 @@ import Data.Ix
 
 -- Simulate the rock paper scissors automaton
 main :: IO ()
-main = runCellularAutomata2D rockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
+main = runCellularAutomata2D detRockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
        >> return ()
 
 -- | Every cell can have a color of be white (empty)
@@ -33,6 +33,10 @@ maxLives = 4
 --   The rock paper scissors automaton uses a moor neighborhood.
 rockPaperScissorsRule :: Rule RPSCell
 rockPaperScissorsRule = Rule moorIndexDeltas (\self friends -> fight self `fmap` choice friends)
+
+-- | Deterministic verison
+detRockPaperScissorsRule :: Rule RPSCell
+detRockPaperScissorsRule = Rule moorIndexDeltas (\self friends -> return $ foldl fight self friends)
 
 fight :: RPSCell -> RPSCell -> RPSCell
 fight toUpdate other
