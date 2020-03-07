@@ -15,7 +15,8 @@ module CellularAutomata2D (
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
     choice, count, chooseWithPropability,
-    makeReversibleRule) where
+    makeReversibleRule,
+    makeVotingRule, makeVotingMoorRule) where
 
 import System.Random (randomRIO, Random)
 import Data.Array (listArray, bounds, (!), Array, (//))
@@ -88,7 +89,7 @@ update rule space = initSpaceIO (getSpaceSize space) updateCell
 
 -- | Iterates over a given space and calls a given function on the
 -- coordinate and value of each cells.
--- This is done in row mayor order.
+-- This is done in row major order.
 forSpace :: Torus a -> ((Int, Int) -> a -> IO ()) -> IO ()
 forSpace space fn =
     forM_ [0..spaceHeight - 1] $ \row ->
@@ -158,3 +159,11 @@ makeReversibleRule :: Rule Int -> Rule (Int, Int)
 makeReversibleRule rule = Rule
     (ruleNeighborhoodDeltas rule)
     (\(c', c) cs -> ruleFunction rule c (map snd cs) >>= \nextC -> return (c, if c' /= nextC then 1 else 0))
+
+-- | Creates a "voting rule", that is a rule for boolean states that only depends on the
+-- number of "on" or True cells in the neighborhood and the cell itself
+makeVotingRule :: [(Int, Int)] -> (Int -> Bool) -> Rule Bool
+makeVotingRule indexDeltas p = Rule indexDeltas $ \self neighborhood -> return $ p (count $ self : neighborhood)
+
+makeVotingMoorRule :: (Int -> Bool) -> Rule Bool
+makeVotingMoorRule = makeVotingRule moorIndexDeltas
