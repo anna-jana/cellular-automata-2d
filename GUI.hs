@@ -1,7 +1,7 @@
 module GUI (
     Cell(..), cycleEnum,
     Color,
-    getColorFromRGB255,
+    getColorFromRGB255, colors,
     white, black, grey, red, green, blue, cyan, brown, yellow, orange,
     runCellularAutomata2D) where
 
@@ -52,6 +52,13 @@ yellow = getColorFromRGB255 255 255 0
 cyan = getColorFromRGB255 0 255 255
 brown = getColorFromRGB255 165 42 42
 orange = getColorFromRGB255 255 165 0
+
+colors :: [Color]
+colors = map (\(r,g,b) -> getColorFromRGB255 r g b) combinations
+    where combinations = iterate step start !! 5
+          start = [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 255)]
+          step cs = cs ++ (add <$> cs <*> cs)
+          add (a, b, c) (a', b', c') = ((a + a') `div` 2, (b + b') `div` 2, (c + c') `div` 2)
 
 -- | the size of the display window we try to get
 targetScreenSize :: Int

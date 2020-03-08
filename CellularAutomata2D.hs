@@ -14,7 +14,7 @@ module CellularAutomata2D (
     -- * Helper for Rules
     moorIndexDeltas, neumannIndexDeltas,
     makeTotalMoorRule,
-    choice, count, chooseWithPropability,
+    choice, count, countCells, chooseWithPropability,
     makeReversibleRule,
     makeVotingRule, makeVotingMoorRule) where
 
@@ -141,7 +141,11 @@ makeTotalMoorRule getBorn stayAlive = Rule moorIndexDeltas
 
 -- | Count the number of True (on/alive cells) in the given neighborhood
 count :: [Bool] -> Int
-count = length . filter id
+count = countCells True
+
+-- | Count the number of cell states in the given neighbprhood
+countCells :: Eq a => a -> [a]  -> Int
+countCells x = length . filter (== x)
 
 -- | Selects one random element from a list.
 -- The list has to be finite.
