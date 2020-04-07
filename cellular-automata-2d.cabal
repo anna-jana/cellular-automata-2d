@@ -22,7 +22,7 @@ library
   -- other-modules:
   -- other-extensions:
   build-depends: SDL,
-                 SDL-gfx <= 0.6.0.2,
+                 SDL-gfx,
                  array,
                  base,
                  random,
@@ -38,7 +38,7 @@ test-suite tests
    build-depends: HUnit,
                   QuickCheck,
                   SDL,
-                  SDL-gfx <=0.6.0.2,
+                  SDL-gfx,
                   array,
                   base,
                   random,

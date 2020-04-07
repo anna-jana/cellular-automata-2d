@@ -198,14 +198,13 @@ draw state = do
         -- get the rect of the cell
         let top = cellSize state * row + transY state * cellSize state
         let left = cellSize state * col + transX state * cellSize state
-        let rect = SDL.Rect
-                (round (zoom state * fromIntegral (left - halfWidth state)) + halfWidth state)
-                (round (zoom state * fromIntegral (top - halfHeight state)) + halfHeight state)
-                (round (zoom state * fromIntegral (left + cellSize state - halfWidth state)) + halfWidth state)
-                (round (zoom state * fromIntegral (top + cellSize state - halfHeight state)) + halfHeight state)
+        let x1 = fromIntegral $ round (zoom state * fromIntegral (left - halfWidth state)) + halfWidth state
+        let y1 = fromIntegral $ round (zoom state * fromIntegral (top - halfHeight state)) + halfHeight state
+        let x2 = fromIntegral $ round (zoom state * fromIntegral (left + cellSize state - halfWidth state)) + halfWidth state
+        let y2 = fromIntegral $ round (zoom state * fromIntegral (top + cellSize state - halfHeight state)) + halfHeight state
         -- draw cell
         let color = getColor cell
-        void $ Draw.box (getScreen state) rect color
+        void $ Draw.box (getScreen state) x1 y1 x2 y2 color
         -- draw the grid
-        void $ Draw.rectangle (getScreen state) rect black
+        void $ Draw.rectangle (getScreen state) x1 y1 x2 y2 black
     SDL.flip (getScreen state)
