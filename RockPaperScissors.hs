@@ -9,8 +9,8 @@ import Data.Ix
 
 -- Simulate the rock paper scissors automaton
 main :: IO ()
-main = runCellularAutomata2D detRockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
-       >> return ()
+-- main = runCellularAutomata2D detRockPaperScissorsRule (initSpaceWithCells (50, 50) (RPSCell White maxLives) [])
+main = randomSpace (50, 50) (map (flip RPSCell maxLives) [minBound..maxBound]) >>= runCellularAutomata2D detRockPaperScissorsRule >> return ()
 
 -- | Every cell can have a color of be white (empty)
 data CellColor = Red | Green | Blue | White deriving (Show, Eq, Bounded, Enum, Ord, Ix)
