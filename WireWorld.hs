@@ -1,4 +1,4 @@
--- | A cellular automaton witch simulates logic circuits
+-- | A cellular automaton which simulates logic circuits
 module WireWorld (Wire, main, wireWorldRule) where
 
 import CellularAutomata2D

@@ -65,12 +65,12 @@ targetScreenSize :: Int
 targetScreenSize = 500
 
 -- | Runs a GUI for a 2d cellular automata using
--- a given starting space, a list of cell states witch can be used
--- by the user to edit the space, a function witch takes a cell states
+-- a given starting space, a list of cell states which can be used
+-- by the user to edit the space, a function which takes a cell states
 -- and returns a color to draw the individual cells and a rule that is
 -- used to updated the space.
 -- The user can press space to start and stop the simulation of the automata.
--- He can also edit the space by clicking into a cell witch goes to the next state.
+-- He can also edit the space by clicking into a cell which goes to the next state.
 runCellularAutomata2D :: Cell a => Rule a -> Torus a -> IO (Torus a)
 runCellularAutomata2D rule space = do
     -- compute our window dimensions

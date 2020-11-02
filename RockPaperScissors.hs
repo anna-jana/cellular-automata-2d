@@ -1,5 +1,5 @@
--- | A cellular automaton witch simulates a lot of rock paper scissor games or
---   something witch is similar to oscillating chemical reactions.
+-- | A cellular automaton which simulates a lot of rock paper scissor games or
+--   something which is similar to oscillating chemical reactions.
 module RockPaperScissors (CellColor(..), RPSCell(..), rockPaperScissorsRule, detRockPaperScissorsRule, main, maxLives) where
 
 import CellularAutomata2D

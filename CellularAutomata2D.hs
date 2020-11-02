@@ -70,7 +70,7 @@ initSpaceIO :: (Int, Int) -> ((Int, Int) -> IO a) -> IO (Torus a)
 initSpaceIO (h, w) initFn = Torus . listArray ((0, 0), (h - 1, w - 1)) <$>
     sequence [initFn (row, col) | row <- [0..h-1], col <- [0..w-1]]
 
--- | Initializes the space using a pure function witch take the coordinate of
+-- | Initializes the space using a pure function which take the coordinate of
 -- the cell and returns the cell value
 initSpace :: (Int, Int) -> ((Int, Int) -> a) -> Torus a
 initSpace (h, w) initFn = Torus $ listArray ((0, 0), (h - 1, w - 1))
@@ -123,7 +123,7 @@ fromMatrix mtx = initSpaceWithCells (length mtx, length $ head mtx) undefined ce
 
 ----------------------------------- Helper for Rules ----------------------------------
 
--- | The Moor neighborhood, witch is used in a lot cellular automata like
+-- | The Moor neighborhood, which is used in a lot cellular automata like
 -- conway's game of life.
 moorIndexDeltas :: [(Int, Int)]
 moorIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], not (dx == 0 && dy == 0)]
@@ -132,7 +132,7 @@ moorIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], not (dx == 0 && dy =
 neumannIndexDeltas :: [(Int, Int)]
 neumannIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], (dx == 0) /= (dy == 0)]
 
--- | Creates a life like automata from a list of neighborhood sizes in witch
+-- | Creates a life like automata from a list of neighborhood sizes in which
 -- a new cell is born and a list of neighborhood sizes where the cell stays
 -- alive. e.g. the game of life is makeTotalMoorRule [2,3] [3]
 makeTotalMoorRule :: [Int] -> [Int] -> Rule Bool

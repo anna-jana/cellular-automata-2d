@@ -1,4 +1,4 @@
--- | a cellular automata witch is inspired by neurons in our brain
+-- | a cellular automata which is inspired by neurons in our brain
 module Brain (Neuron(..), brainRule, main) where
 
 import CellularAutomata2D
