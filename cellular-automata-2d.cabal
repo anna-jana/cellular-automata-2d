@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Analysis, OneDim, Brain, GameOfLife, GUI, CellularAutomata2D, Term,
                        RockPaperScissors, WireWorld, Forest, Files, Cave, Seeds, ToomRule,
-                       Anneal, Banks, Majority, Cyclic, XorWave
+                       Anneal, Banks, Majority, Cyclic, XorWave, LargerThanLife
   -- other-modules:
   -- other-extensions:
   build-depends: SDL,

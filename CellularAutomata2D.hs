@@ -12,7 +12,7 @@ module CellularAutomata2D (
     -- * Initializing Spaces
     randomSpace, initSpaceWithCells, initBoolSpaceWithCells, fromMatrix,
     -- * Helper for Rules
-    moorIndexDeltas, neumannIndexDeltas,
+    moorIndexDeltas, neumannIndexDeltas, moorIndexDeltasRadiusN,
     makeTotalMoorRule,
     choice, count, countCells, chooseWithPropability,
     makeReversibleRule,
@@ -123,10 +123,14 @@ fromMatrix mtx = initSpaceWithCells (length mtx, length $ head mtx) undefined ce
 
 ----------------------------------- Helper for Rules ----------------------------------
 
+-- | Moor neighborhood of radius N
+moorIndexDeltasRadiusN :: Int -> [(Int, Int)]
+moorIndexDeltasRadiusN n = [(dy, dx) | dx <- [-n..n], dy <- [-n..n], not (dx == 0 && dy == 0)]
+
 -- | The Moor neighborhood, which is used in a lot cellular automata like
 -- conway's game of life.
 moorIndexDeltas :: [(Int, Int)]
-moorIndexDeltas = [(dy, dx) | dx <- [-1..1], dy <- [-1..1], not (dx == 0 && dy == 0)]
+moorIndexDeltas = moorIndexDeltasRadiusN 1
 
 -- | The von Neunmann neighborhood.
 neumannIndexDeltas :: [(Int, Int)]
