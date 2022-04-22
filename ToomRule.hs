@@ -1,4 +1,4 @@
-module ToomsRule where
+module ToomRule where
 
 import CellularAutomata2D
 import GUI
